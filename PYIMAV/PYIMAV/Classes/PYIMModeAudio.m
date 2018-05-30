@@ -87,7 +87,7 @@
             self.width = rsp.width;
             self.height = rsp.height;
             self.fps = rsp.fps;
-            self.bitrate = rsp.bitrate;
+            self.bitrate = rsp.bitrate*1000;
 //            self.angle = rsp.angle;
             self.mirror = rsp.mirror;
             self.angle = rsp.client == Client_Android ? -rsp.angle : rsp.angle;
@@ -122,7 +122,7 @@
             self.width = rsp.width;
             self.height = rsp.height;
             self.fps = rsp.fps;
-            self.bitrate = rsp.bitrate;
+            self.bitrate = rsp.bitrate*1000;
 //            self.angle = rsp.angle;
             
             self.angle = rsp.client == Client_Android ? -rsp.angle : rsp.angle;
