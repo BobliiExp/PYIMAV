@@ -16,6 +16,8 @@
 #import "PYIMAudioConverter.h"
 #import "PYIMVideoConverter.h"
 
+#import "PYIMNetworkManager.h"
+
 ushort const kCMD_Re_ServerMsg = 0x8500;             ///< 0x8500 服务器发出消息
 
 @interface PYIMError () {}
@@ -62,6 +64,7 @@ static uint16_t SerialNumber = 0;
         _cmdID = ntohs_x(pheader->CmdId);
         _seqID = ntohs_x(pheader->SeqId);
         _cmdStatus = ntohs_x(pheader->CmdStatus);
+//        _client = ntohs_x(pheader->Client);
     }
     
     return self;
@@ -326,7 +329,7 @@ static NSInteger kTimeout = 10; // 秒
     rspIp = [NSString stringWithUTF8String:rsp.localIp];
     
     if(![kAccount.myLocalIp isEqualToString:rspIp] || kAccount.myLocalPort != rsp.localPort){
-        kAccount.myLocalIp = [NSString stringWithUTF8String:rsp.localIp];
+        kAccount.myLocalIp = rspIp;
         kAccount.myLocalPort = rsp.localPort;
     }
     
@@ -451,7 +454,7 @@ static NSInteger kTimeout = 10; // 秒
     }
     
     rspIp = [NSString stringWithUTF8String:rsp.localIp];
-    if (![kAccount.myLocalIp isEqualToString:rspIp])
+    if (rspIp && ![kAccount.myLocalIp isEqualToString:rspIp])
     {
         kAccount.myLocalIp = rspIp;
     }
@@ -540,7 +543,7 @@ static NSInteger kTimeout = 10; // 秒
     }
     
     rspIp = [NSString stringWithUTF8String:rsp.toLocalIp];
-    if (![kAccount.myLocalIp isEqualToString:rspIp])
+    if (rspIp && ![kAccount.myLocalIp isEqualToString:rspIp])
     {
         kAccount.myLocalIp = rspIp;
     }
@@ -1010,15 +1013,15 @@ static NSInteger kTimeout = 10; // 秒
         return -1;
     }
     
-    if (kAccount.frameID == req.frameID)
-    {
-        kAccount.videoLen += packLen;
-    }
-    else
-    {
-        kAccount.frameID = req.frameID;
-        kAccount.videoLen = packLen;
-    }
+//    if (kAccount.frameID == req.frameID)
+//    {
+//        kAccount.videoLen += packLen;
+//    }
+//    else
+//    {
+//        kAccount.frameID = req.frameID;
+//        kAccount.videoLen = packLen;
+//    }
     
     if ((int) (pid * P2P_VIDEO_SLICE_SIZE + packLen) > (int) (P2P_MAX_BUF_SIZE))
     {
@@ -1037,25 +1040,23 @@ static NSInteger kTimeout = 10; // 秒
         self.cmdStatus = C2C_ERR_VideoFrameSize;
         return -1;
     }
-    else if (fLen > kAccount.videoLen)
-    {
-        NSLog(@"onC2CVideoFrame|fromip:%@, fromport:%u|frameId:[%llu, %llu], packNum:%d, packId:%d, packLen:%d, frameLen:%d, videoLen:%d|not enough", kAccount.rspIp, kAccount.rspPort, kAccount.frameID, req.frameID, packs, pid, packLen, fLen, kAccount.videoLen);
-        self.cmdStatus = C2C_ERR_VideoFrameSize;
-        return -1;
-    }
-    else if (fLen < kAccount.videoLen)
-    {
-        NSLog(@"onC2CVideoFrame|fromip:%@, fromport:%u|frameId:[%llu, %llu], packNum:%d, packId:%d, packLen:%d, frameLen:%d, videoLen:%d|ignore", kAccount.rspIp, kAccount.rspPort, kAccount.frameID, req.frameID, packs, pid, packLen, fLen, kAccount.videoLen);
-        kAccount.frameID = 0;
-        kAccount.videoLen = 0;
-        self.cmdStatus = C2C_ERR_VideoFrameSize;
-        return -1;
-    }
+//    else if (fLen > kAccount.videoLen)
+//    {
+//        NSLog(@"onC2CVideoFrame|fromip:%@, fromport:%u|frameId:[%llu, %llu], packNum:%d, packId:%d, packLen:%d, frameLen:%d, videoLen:%d|not enough", kAccount.rspIp, kAccount.rspPort, kAccount.frameID, req.frameID, packs, pid, packLen, fLen, kAccount.videoLen);
+//        self.cmdStatus = C2C_ERR_VideoFrameSize;
+//        return -1;
+//    }
+//    else if (fLen < kAccount.videoLen)
+//    {
+//        NSLog(@"onC2CVideoFrame|fromip:%@, fromport:%u|frameId:[%llu, %llu], packNum:%d, packId:%d, packLen:%d, frameLen:%d, videoLen:%d|ignore", kAccount.rspIp, kAccount.rspPort, kAccount.frameID, req.frameID, packs, pid, packLen, fLen, kAccount.videoLen);
+//        kAccount.frameID = 0;
+//        kAccount.videoLen = 0;
+//        self.cmdStatus = C2C_ERR_VideoFrameSize;
+//        return -1;
+//    }
     
     // 视频需要数据模型支持相关参数
     self.mode = [[PYIMModeVideo alloc] initWithData:data converter:self.videoConv];
-    kAccount.frameID = 0;
-    kAccount.videoLen = 0;
     
     return swapLen;
 }
@@ -1283,7 +1284,7 @@ static NSInteger kTimeout = 10; // 秒
     NSData *data = nil;
     if([self.mode isMemberOfClass:[PYIMModeVideo class]]){
         // 视频数据
-        data = [(PYIMVideoConverter*)converter encode:self.mode.media];
+        data = [(PYIMVideoConverter*)converter encode:self.mode];
         
     }else if([self.mode isMemberOfClass:[PYIMModeAudio class]]){
         // 语音数据
@@ -1314,6 +1315,7 @@ static NSInteger kTimeout = 10; // 秒
         header->CmdId = htons_x(self.cmdID);
         header->SeqId = htons_x(self.seqID);
         header->CmdStatus = htons_x(self.cmdStatus);
+//        header->Client = htons_x(Client_iOS);
         
         sendLen += sizeof(header);
         // param
@@ -1330,14 +1332,13 @@ static NSInteger kTimeout = 10; // 秒
         }
         
         if(media){
-            memcpy(buf+sendLen, media.bytes, media.length);
-            sendLen += media.length;
-        }
-        
-        // 最后赋值总长度
-        if(sendLen > P2P_MAX_BUF_SIZE){
-            NSLog(@"发送数据长度超出最大要求:%d", sendLen);
-            return nil;
+            if(media.length<(P2P_MAX_BUF_SIZE-sendLen)){
+                memcpy(buf+sendLen, media.bytes, media.length);
+                sendLen += media.length;
+            } else {
+                NSLog(@"发送数据长度超出最大要求:%d", sendLen+(int)media.length);
+                return nil;
+            }
         }
         
         header->TotalLen = htons_x(sendLen);
@@ -1383,6 +1384,8 @@ static NSInteger kTimeout = 10; // 秒
         case C2S_HEART_BEAT:
         case C2C_HEART_BEAT:
             
+        case C2C_SWITCH:
+            
             return NO;
             
         default: return YES;
@@ -1417,8 +1420,8 @@ static NSInteger kTimeout = 10; // 秒
 - (BOOL)resendable {
     if(self.cmdID==C2S_LOGIN)return YES;
     if(!kAccount.hadLogin)return NO;
-    if(self.media.resentCount==0)return NO;
     if(self.media.mode)return NO;
+    if(self.media.resentCount>0)return YES;
     
     return NO;
 }

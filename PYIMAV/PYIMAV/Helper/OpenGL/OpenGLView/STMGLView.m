@@ -619,7 +619,7 @@ exit:
         //        mat4f_LoadOrtho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, modelviewProj);
         //        glUniformMatrix4fv(_uniformMatrix, 1, GL_FALSE, modelviewProj);
         
-        CGFloat angleRedians = GLKMathDegreesToRadians(frame.angle); //
+        CGFloat angleRedians = GLKMathDegreesToRadians(-frame.angle); //
         
         GLKMatrix4 rotateMatrixZ = GLKMatrix4MakeRotation(angleRedians , 0.0, 0.0, 1.0);
         

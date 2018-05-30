@@ -21,6 +21,7 @@
 		2558F46E2091AFC200F52DF8 /* PYIMAPIChat.m in Sources */ = {isa = PBXBuildFile; fileRef = 2558F46D2091AFC200F52DF8 /* PYIMAPIChat.m */; };
 		2558F4712091B57F00F52DF8 /* PYIMNetworkManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 2558F4702091B57F00F52DF8 /* PYIMNetworkManager.m */; };
 		256930BE20AACD850002B477 /* PYIMModeAudio.m in Sources */ = {isa = PBXBuildFile; fileRef = 256930BD20AACD850002B477 /* PYIMModeAudio.m */; };
+		256F4E5220BBD41A006D1D74 /* UIButton+Swizzle.m in Sources */ = {isa = PBXBuildFile; fileRef = 256F4E5120BBD41A006D1D74 /* UIButton+Swizzle.m */; };
 		257780B520940F2A00B43AFD /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 257780B420940F2A00B43AFD /* CoreMedia.framework */; };
 		257780B720940F3000B43AFD /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 257780B620940F3000B43AFD /* AVFoundation.framework */; };
 		257780B920940F3700B43AFD /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 257780B820940F3600B43AFD /* AudioToolbox.framework */; };
@@ -94,6 +95,8 @@
 		2558F4702091B57F00F52DF8 /* PYIMNetworkManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PYIMNetworkManager.m; sourceTree = "<group>"; };
 		256930BC20AACD850002B477 /* PYIMModeAudio.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PYIMModeAudio.h; sourceTree = "<group>"; };
 		256930BD20AACD850002B477 /* PYIMModeAudio.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PYIMModeAudio.m; sourceTree = "<group>"; };
+		256F4E5020BBD41A006D1D74 /* UIButton+Swizzle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIButton+Swizzle.h"; sourceTree = "<group>"; };
+		256F4E5120BBD41A006D1D74 /* UIButton+Swizzle.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIButton+Swizzle.m"; sourceTree = "<group>"; };
 		257780B420940F2A00B43AFD /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		257780B620940F3000B43AFD /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		257780B820940F3600B43AFD /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
@@ -580,6 +583,8 @@
 				25CBE45720B26F9900CE51A7 /* UIApplication+Permissions.m */,
 				25CBE45820B26F9900CE51A7 /* UIView+Toast.h */,
 				25CBE45920B26F9900CE51A7 /* UIView+Toast.m */,
+				256F4E5020BBD41A006D1D74 /* UIButton+Swizzle.h */,
+				256F4E5120BBD41A006D1D74 /* UIButton+Swizzle.m */,
 			);
 			path = Category;
 			sourceTree = "<group>";
@@ -709,6 +714,7 @@
 				C31A7A81208DC63A000FE9B3 /* Sources */,
 				C31A7A82208DC63A000FE9B3 /* Frameworks */,
 				C31A7A83208DC63A000FE9B3 /* Resources */,
+				71D3874EFA496AFB571A6E79 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -769,6 +775,24 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		71D3874EFA496AFB571A6E79 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${SRCROOT}/Pods/Target Support Files/Pods-PYIMAV/Pods-PYIMAV-resources.sh",
+				"${PODS_ROOT}/SVProgressHUD/SVProgressHUD/SVProgressHUD.bundle",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SVProgressHUD.bundle",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-PYIMAV/Pods-PYIMAV-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		D3C7A0AC5A5F37BBABCE1BA2 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -820,6 +844,7 @@
 				25CBE47F20B26F9900CE51A7 /* c2s.c in Sources */,
 				250DCD80209176D600ED131D /* PYIMQueue.m in Sources */,
 				25CBE48020B26F9900CE51A7 /* p2pnet.c in Sources */,
+				256F4E5220BBD41A006D1D74 /* UIButton+Swizzle.m in Sources */,
 				C31A7AD7208DDEE3000FE9B3 /* PYVCChatVideo.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -894,7 +919,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -943,7 +968,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
@@ -975,11 +1000,6 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/libx264/lib",
-					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/libwebrtc/lib",
-					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/libffmpeg/lib",
-					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/libg729a/lib",
-					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/opus/lib",
 					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/OpenGL/FFmpeg-iOS/lib",
 					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/OpenGL/x264-iOS/lib",
 				);
@@ -1015,11 +1035,6 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/libx264/lib",
-					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/libwebrtc/lib",
-					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/libffmpeg/lib",
-					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/libg729a/lib",
-					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/opus/lib",
 					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/OpenGL/FFmpeg-iOS/lib",
 					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/OpenGL/x264-iOS/lib",
 				);

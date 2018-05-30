@@ -33,15 +33,11 @@
 @property (nonatomic, strong) PYIMVideoController *videoController;
 @property (nonatomic, strong) PYIMAudioController *audioController;
 
+@property (nonatomic, weak) PYIMModeNetwork *taskGetAccount;  ///< 任务
+
 @end
 
 @implementation PYVCChatVideo
-
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
-    
-    [self.videoController adjustDisplay];
-}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -117,18 +113,20 @@
         return;
     }
     
-    __weak typeof(self) weakSelf = self;
-    
+    @weakify(self);
     if(self.isRequest){
         [PYIMAPIChat chatC2CRequestAccept:YES callback:^(PYIMError *error) {
-            __strong typeof(self) strongSelf = weakSelf;
-            if(error.success && strongSelf){
+            @strongify(self);
+            if(self && error.success){
                 NSLog(@"C2C_REQUEST_RSP 发送成功");
-                [strongSelf startPlay];
+                [self startPlay];
             }
         }];
     }else {
-        PYIMModeMedia *media = [PYIMAPIChat chatGetAccount:self.toAccount type:P2P_CHAT_TYPE_VIDEO callback:^(PYIMError *error) {
+        self.taskGetAccount = [PYIMAPIChat chatGetAccount:self.toAccount type:P2P_CHAT_TYPE_VIDEO callback:^(PYIMError *error) {
+            @strongify(self);
+            if(self==nil)return;
+            
             if(error.success){
                 NSLog(@"C2S_HOLE 打洞成功");
                 
@@ -150,7 +148,7 @@
             }
         }];
         
-        media.resentCount = 3; // 30秒都没有成功可能对方不在线
+        self.taskGetAccount.media.resentCount = 3; // 30秒都没有成功可能对方不在线
     }
 }
 
@@ -187,7 +185,7 @@
                 return;
             }
             
-            [PYIMAPIChat chatC2CSendMedia:audio callback:nil];
+//            [PYIMAPIChat chatC2CSendMedia:audio callback:nil];
         }];
         
         [self.audioController startAudio:^(PYIMMediaState state) {
@@ -209,21 +207,23 @@
         @weakify(self);
         [self.videoController recordMedia:^(PYIMModeVideo *media) {
             @strongify(self);
-            if(self.isLocal){
-                [self.videoController playMedia:media];
-                return;
+            if(self){
+                if(self.isLocal){
+                    [self.videoController playMedia:media];
+                    return;
+                }
+                
+                media.timeRecordStart = timeRecord;
+                media.timeRecordEnd = [[NSDate date] timeIntervalSince1970]*1000;
+                
+                [PYIMAPIChat chatC2CSendMedia:media callback:nil];
             }
-            
-            media.timeRecordStart = timeRecord;
-            media.timeRecordEnd = [[NSDate date] timeIntervalSince1970]*1000;
-            
-            [PYIMAPIChat chatC2CSendMedia:media callback:nil];
-            
         }];
         
         [self.videoController start:^(PYIMMediaState state) {
             @strongify(self);
-            [self.view makeToast:[NSString stringWithFormat:@"视频%@", state==EMediaState_Paused?@"已暂停":@"播放中"]];
+            if(self)
+                [self.view makeToast:[NSString stringWithFormat:@"视频%@", state==EMediaState_Paused?@"已暂停":@"播放中"]];
         }];
     }
 }
@@ -276,6 +276,8 @@
             
         }else if(error.cmdID == C2C_PAUSE){
             
+        }else if(error.cmdID == C2C_SWITCH){
+            [self.videoController stop];
         }
     }
 }
@@ -292,13 +294,27 @@
 }
 
 - (IBAction)btnAudioClicked:(id)sender {
-    
+    if(self.videoController.isPlaying){
+        [PYIMAPIChat chatC2CRequestOpr:C2C_SWITCH callback:^(PYIMError *error) {
+            if(error.success){
+                [self.videoController stop];
+                [self.videoController performSelector:@selector(cleanSelf)]; // test for runtime method undefine
+            }
+        }];
+    }else {
+        [self.view makeToast:@"已经切换"];
+    }
 }
 
 - (void)caneclWithError:(PYIMError*)error isLocal:(BOOL)isLocal {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    if(self.videoController==nil)return;
     
-    if(isLocal && !self.isLocal){
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    if(self.taskGetAccount){
+        [PYIMAPIChat cancelTask:@[self.taskGetAccount]];
+    }
+    
+    if(isLocal && !self.isLocal && self.taskGetAccount==nil){
         [PYIMAPIChat chatC2CRequestOpr:self.videoController.isPlaying ? C2C_CLOSE: C2C_CANCEL_REQUEST callback:nil];
     }
     

@@ -10,6 +10,12 @@
 #import "PYIMQueue.h"
 #import "PYIMVideoConverter.h"
 
+#import <objc/message.h>
+
+void cleanSelf(id self, SEL _cmd){
+    NSLog(@"貌似您没有实现cleanSelf方法，这里是动态添加的处理逻辑");
+}
+
 typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 
 static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为0，否则递增，当达到50*5（每秒50个包）时视作对方下线
@@ -42,9 +48,9 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
     PYIMQueue *queueRec;
     
     dispatch_queue_t queuePlayer;
-    
-    NSThread *threadRender;
     NSTimer *timerRender;
+    
+    int fps_balance;
 }
 
 
@@ -94,10 +100,6 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
     return self;
 }
 
-- (void)adjustDisplay {
-    _recordLayer.frame = _viewbg.layer.bounds;
-}
-
 - (void)setupCaptureSession {
     // 获取摄像头，默认前置摄像头
     NSArray *cameraDevice = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
@@ -113,14 +115,6 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
     session = [[AVCaptureSession alloc] init];
     if([session canSetSessionPreset:AVCaptureSessionPreset640x480])
         [session setSessionPreset:AVCaptureSessionPreset640x480];
-    
-//    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone){
-//        if([session canSetSessionPreset:AVCaptureSessionPreset640x480])
-//            [session setSessionPreset:AVCaptureSessionPreset640x480];
-//    } else {
-//        if([session canSetSessionPreset:AVCaptureSessionPresetPhoto])
-//            [session setSessionPreset:AVCaptureSessionPresetPhoto];
-//    }
     
     // 创建输出配置
     output = [[AVCaptureVideoDataOutput alloc] init];
@@ -143,11 +137,12 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
     [self.viewbg.layer addSublayer:_recordLayer];
     
     // 接收播放layer
-    CGFloat width = MAX(CGRectGetWidth(self.viewfront.bounds), CGRectGetHeight(self.viewfront.bounds));
+    CGFloat width = MIN(CGRectGetWidth(self.viewfront.bounds), CGRectGetHeight(self.viewfront.bounds));
     _viewPlay = [[STMGLView alloc] initWithFrame:CGRectMake(-(width-CGRectGetWidth(_viewfront.bounds))/2, -(width-CGRectGetHeight(_viewfront.bounds))/2, width, width) videoFrameSize:CGSizeMake(ENCODE_FRMAE_WIDTH, ENCODE_FRMAE_HEIGHT) videoFrameFormat:STMVideoFrameFormatYUV];
-    _viewPlay.layer.borderWidth = 3;
-    _viewPlay.layer.borderColor = [UIColor blueColor].CGColor;
     [self.viewfront addSubview:_viewPlay];
+    
+    self.viewbg.layer.masksToBounds = YES;
+    self.viewfront.clipsToBounds = YES;
 }
 
 - (void)setupCamera {
@@ -159,6 +154,7 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
     if([session canAddInput:temp]){
         [session addInput:temp];
         input = temp;
+        [self setupFPS];
     }
     
     [session commitConfiguration];
@@ -172,24 +168,30 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
     
     for ( AVCaptureDeviceFormat *format in [device formats] ) {
         for ( AVFrameRateRange *range in format.videoSupportedFrameRateRanges ) {
-            if ( range.maxFrameRate > bestFrameRateRange.maxFrameRate ) {
+            if ( range.maxFrameRate > bestFrameRateRange.maxFrameRate) {
                 bestFormat = format;
                 bestFrameRateRange = range;
             }
         }
     }
-    if ( bestFormat) {
+    
+    // 这里获取到相机最佳fsp与format
+    
+    if (bestFormat) {
+        fps_balance = bestFrameRateRange.minFrameRate+(bestFrameRateRange.maxFrameRate-bestFrameRateRange.minFrameRate)/2;
+        fps_balance = MAX(fps_balance, 10);
+        fps_balance = MIN(fps_balance, 30);
         if ( [device lockForConfiguration:NULL] == YES ) {
             device.activeFormat = bestFormat;
-            device.activeVideoMinFrameDuration = CMTimeMake(1,VIDEO_FPS);
-            device.activeVideoMaxFrameDuration = CMTimeMake(1,VIDEO_FPS);
+            device.activeVideoMinFrameDuration = CMTimeMake(1,fps_balance);
+            device.activeVideoMaxFrameDuration = CMTimeMake(1,fps_balance);
             [device unlockForConfiguration];
         }
     }
 }
 
 - (BOOL)isPlaying {
-    return self.state == EMediaState_Playing;
+    return self.playEnd!=nil;
 }
 
 - (void)setState:(PYIMMediaState)state {
@@ -198,24 +200,30 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
     if(self.playEnd)
         self.playEnd(state);
 }
+
 #pragma mark - 相关操作
 
 - (void)switchPlayWindow {
+    // 控制切换动画，有动画效果不好
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    
     if([_viewbg.subviews containsObject:_viewPlay]){
-        CGFloat width = MAX(CGRectGetWidth(_viewfront.bounds), CGRectGetHeight(_viewfront.bounds));
+        CGFloat width = MIN(CGRectGetWidth(_viewfront.bounds), CGRectGetHeight(_viewfront.bounds));
         _viewPlay.frame = CGRectMake(-(width-CGRectGetWidth(_viewfront.bounds))/2, -(width-CGRectGetHeight(_viewfront.bounds))/2, width, width);
         [_viewfront addSubview:_viewPlay];
         
         _recordLayer.frame = _viewbg.bounds;
         [_viewbg.layer addSublayer:_recordLayer];
     }else {
-        CGFloat width = MAX(CGRectGetWidth(_viewbg.bounds), CGRectGetHeight(_viewbg.bounds));
+        CGFloat width = MIN(CGRectGetWidth(_viewbg.bounds), CGRectGetHeight(_viewbg.bounds));
         _viewPlay.frame = CGRectMake(-(width-CGRectGetWidth(_viewbg.bounds))/2, -(width-CGRectGetHeight(_viewbg.bounds))/2, width, width);
         [_viewbg addSubview:_viewPlay];
         
         _recordLayer.frame = _viewfront.bounds;
         [_viewfront.layer addSublayer:_recordLayer];
     }
+    [CATransaction commit];
 }
 
 - (void)switchCamera {
@@ -241,6 +249,9 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
 }
 
 - (void)stop {
+    if(self.playEnd==nil)
+        return;
+    
     self.playEnd = nil;
     self.recordEnd = nil;
     
@@ -268,21 +279,19 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
     _state = EMediaState_Playing; // 默认只有收到数据就开始播放
     _playEnd = block;
     
-    timerRender = [NSTimer scheduledTimerWithTimeInterval:1.0/VIDEO_FPS target:self selector:@selector(playLoop) userInfo:nil repeats:YES];
-    [[NSRunLoop currentRunLoop] addTimer:timerRender forMode:NSRunLoopCommonModes];
-    return;
+    // 主线程操作OpenGLES绘制
     
-    threadRender = [[NSThread alloc] initWithTarget:self
-                                           selector:@selector(threadRenderFunc)
-                                             object:nil];
-    [threadRender start];
 }
 
 #pragma mark - 录制播放处理
 
 - (void)playMedia:(PYIMModeVideo *)media {
-    dispatch_barrier_async(queuePlayer, ^{
-        [queueRec push:media];
+    [queueRec push:media];
+    
+    // dispatch_after 不准确后期优化
+    dispatch_time_t timer = dispatch_time(DISPATCH_TIME_NOW, 1.000000/media.fps * NSEC_PER_SEC);
+    dispatch_after(timer, dispatch_get_main_queue(), ^{
+        [self playLoop];
     });
 }
 
@@ -290,7 +299,7 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
     self.recordEnd = block;
 }
 
-// 子线程runloop循环渲染，可以考虑放到主线程runloop处理，不过可能导致UI卡顿（如果要像微信那样缩小后进行其他功能操作，就必须放到子线程了）
+// duplicate 子线程runloop循环渲染，可以考虑放到主线程runloop处理，不过可能导致UI卡顿（如果要像微信那样缩小后进行其他功能操作，就必须放到子线程了）
 - (void)threadRenderFunc {
     @autoreleasepool {
         // 这里的时间是控制渲染速度的
@@ -321,15 +330,11 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
 
 /// 录制一定的样本针就会回调，CMSampleBufferRef中可以获得相关sample信息
 - (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
-    NSData *record = [PYIMVideoConverter convertSample:sampleBuffer];
-    if(record && self.recordEnd){
-        PYIMModeVideo *video = [[PYIMModeVideo alloc] init];
-        video.media = record;
+    PYIMModeVideo *video = [PYIMVideoConverter convertSample:sampleBuffer];
+    if(video.media && self.recordEnd){
         video.mirror = cameraFront;
-        video.angle = 0; // 默认只支持竖屏
-        video.width = ENCODE_FRMAE_WIDTH;
-        video.height = ENCODE_FRMAE_HEIGHT;
-        video.fps = VIDEO_FPS;
+        video.angle = 90; // 默认只支持竖屏
+        video.fps = fps_balance;
         video.bitrate = VIDEO_BITRATE;
         
         if(_state == EMediaState_Playing)
@@ -499,5 +504,88 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
         
     }];
 }
+
+#pragma mark - runtime add methods
+
+/// 第一次尝试，尝试处理未实现的消息转发，如果本地有处理返回YES，否则将进行其他方式处理
++ (BOOL)resolveInstanceMethod:(SEL)sel {
+//    return [super resolveInstanceMethod:sel];
+    
+    if(sel == @selector(cleanSelf)){
+        // 动态添加cleanSelf方法
+        // 第一个参数：给哪个类添加方法
+        // 第二个参数：添加方法的方法编号
+        // 第三个参数：添加方法的函数实现（函数地址）
+        // 第四个参数：函数的类型，(返回值+参数类型) v:void @:对象->self :表示SEL->_cmd
+        class_addMethod(self, @selector(cleanSelf), (IMP)cleanSelf, "v@:");
+        return YES;
+    }
+    
+    return [super resolveInstanceMethod:sel];
+}
+
+/// 第二次尝试
+- (id)forwardingTargetForSelector:(SEL)aSelector {
+//    return [super forwardingTargetForSelector:aSelector];
+    
+    // 动态创建类处理
+    NSString *selectorStr = NSStringFromSelector(aSelector);
+    // 做一次类的判断，只对 UIResponder 和 NSNull 有效
+    if ([[self class] isSubclassOfClass: NSClassFromString(@"UIResponder")] ||
+        [self isKindOfClass:[NSObject class]] ||
+        [self isKindOfClass: [NSNull class]])
+    {
+        NSLog(@"PROTECTOR: -[%@ %@]", [self class], selectorStr);
+        NSLog(@"PROTECTOR: unrecognized selector \"%@\" sent to instance: %p", selectorStr, self);
+        // 查看调用栈
+        NSLog(@"PROTECTOR: call stack: %@", [NSThread callStackSymbols]);
+        
+        // 对保护器插入该方法的实现
+        Class protectorCls = NSClassFromString(@"Protector");
+        if (!protectorCls)
+        {
+            protectorCls = objc_allocateClassPair([NSObject class], "Protector", 0);
+            objc_registerClassPair(protectorCls);
+        }
+        
+        // 动态添加方法
+        class_addMethod(protectorCls, aSelector, [self safeImplementation:aSelector],
+                        [selectorStr UTF8String]);
+        
+        Class Protector = [protectorCls class];
+        id instance = [[Protector alloc] init];
+        
+        return instance;
+    }
+    
+    return [super forwardingTargetForSelector:aSelector];
+}
+
+- (IMP)safeImplementation:(SEL)aSelector
+{
+    IMP imp = imp_implementationWithBlock(^()
+                                          {
+                                              NSLog(@"PROTECTOR: %@ Done", NSStringFromSelector(aSelector));
+                                          });
+    return imp;
+}
+
+/// 第三次尝试
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)aSelector {
+    NSMethodSignature* signature = [super methodSignatureForSelector:aSelector];
+    if (!signature) {
+        return [queueRec methodSignatureForSelector:aSelector];
+    }
+    
+    return [super methodSignatureForSelector:aSelector];
+}
+
+-(void)forwardInvocation:(NSInvocation *)anInvocation {
+    SEL selector = [anInvocation selector];
+    if ([queueRec respondsToSelector:selector]) {
+        [anInvocation invokeWithTarget:queueRec];
+    }
+}
+
 
 @end

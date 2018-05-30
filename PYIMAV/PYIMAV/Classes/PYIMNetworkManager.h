@@ -26,4 +26,6 @@
 
 + (void)addTask:(PYIMModeNetwork*)media;
 
++ (void)cancelTask:(NSArray*)tasks;
+
 @end

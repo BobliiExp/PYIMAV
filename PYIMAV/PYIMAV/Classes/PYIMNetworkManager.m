@@ -61,7 +61,7 @@ adpcm_state decode_state;
     return self;
 }
 
-/// 被queue触发调用，也可以手动触发调用
+/// 重写了start就不再走main函数了， 被queue触发调用，也可以手动触发调用
 - (void)start {
     if ([self isCancelled]) {
         NSLog(@"已取消，不再执行 cmd:0x%04x seqID:%d", self.mode.cmdID, self.mode.seqID);
@@ -94,10 +94,15 @@ adpcm_state decode_state;
     }
     
     // 这里不再判断，发送后才计算timeout
-//    if(self.mode.timeOut){
-//        [self operationFinishedWithErrorCode:NSURLErrorTimedOut];
-//        return;
-//    }
+    //    if(self.mode.timeOut){
+    //        [self operationFinishedWithErrorCode:NSURLErrorTimedOut];
+    //        return;
+    //    }
+    
+    // 控制超时
+    self.timer = [NSTimer timerWithTimeInterval:self.mode.media.timeOutSpan target:self selector:@selector(timerDown) userInfo:nil repeats:NO];
+    [[NSRunLoop mainRunLoop] addTimer:self.timer forMode:NSRunLoopCommonModes];
+    
     
     NSData *dataSend = [self.mode.media getSendData:self.converter]; // 必须这里调用，确保相关判断触发
     if(dataSend==nil || dataSend.length==0){
@@ -105,10 +110,6 @@ adpcm_state decode_state;
         NSLog(@"发送数据为空：cmd:0x%04x, port:%d, host:%@ size:%ti seqID:%d", self.mode.cmdID, self.mode.portServer, self.mode.hostServer, dataSend.length, self.mode.media.seqID);
         return;
     }
-    
-    // 控制超时
-    self.timer = [NSTimer timerWithTimeInterval:self.mode.media.timeOutSpan target:self selector:@selector(timerDown) userInfo:nil repeats:NO];
-    [[NSRunLoop mainRunLoop] addTimer:self.timer forMode:NSRunLoopCommonModes];
     
     if(self.socket){
         if(self.socket.isConnected){
@@ -135,6 +136,7 @@ adpcm_state decode_state;
     }else {
         kAccount.toRecvTime = [[NSDate date] timeIntervalSince1970];
     }
+    
 }
 
 - (void)operationFinishedWithErrorCode:(NSInteger)code {
@@ -160,6 +162,7 @@ adpcm_state decode_state;
         }
     }else {
         [self.mode.media prepareReSend];
+        // 再次执行
         [self prepareTask];
     }
 }
@@ -191,7 +194,7 @@ adpcm_state decode_state;
 /// 注意这里手动设置结束，表示想要一出去opr，不能触发任务回调，所以是cancel
 - (void)setFinished:(BOOL)finished {
     [self cancelTimer];
-
+    
     [self willChangeValueForKey:@"isFinished"];
     _finished = finished;
     [self didChangeValueForKey:@"isFinished"];
@@ -205,6 +208,10 @@ adpcm_state decode_state;
 
 - (BOOL)isAsynchronous {
     return YES;
+}
+
+- (void)dealloc {
+//    NSLog(@"dealloc NSOperation cmd:0x%04x seq:%d ip:%@ port:%d", self.mode.cmdID, self.mode.seqID, self.mode.hostServer, self.mode.portServer);
 }
 
 @end
@@ -353,6 +360,23 @@ adpcm_state decode_state;
     }];
     
     return opr;
+}
+
+- (void)cancelTask:(NSArray*)tasks {
+    NSMutableArray *temp = [NSMutableArray arrayWithArray:tasks];
+    for(PYIMOperation *opr in _queue.operations){
+        for(PYIMModeNetwork *task in tasks){
+            task.callback = nil;
+            task.media.resentCount = 0;
+            
+            if(opr.mode.tagSelf == task.tagSelf){
+                [opr cancel];
+                opr.finished = YES;
+                [temp removeObject:task];
+                break;
+            }
+        }
+    }
 }
 
 /// 暂停manger中待执行opr
@@ -649,8 +673,7 @@ adpcm_state decode_state;
         _queue.maxConcurrentOperationCount = 10; // 任务队列最大并发数量，语音发送具有时效性
         queueSock = dispatch_queue_create("sockettask", DISPATCH_QUEUE_SERIAL); // the socket queue must not be a concurrent queue
         heartTimespan = 15; // 默认30s
-        _converter = [[PYIMAudioConverter alloc] init];
-        _converterVideo = [[PYIMVideoConverter alloc] init];    // 视频转化器中会有内存泄漏
+        
         self.sType = EServer_Login;
     }
     
@@ -738,6 +761,22 @@ adpcm_state decode_state;
     return _managerVideo;
 }
 
+- (PYIMVideoConverter*)converterVideo {
+    if(_converterVideo == nil){
+        _converterVideo = [[PYIMVideoConverter alloc] init];    // 视频转化器中会有内存泄漏
+    }
+    
+    return _converterVideo;
+}
+
+- (PYIMAudioConverter*)converter {
+    if(_converter == nil){
+        _converter = [[PYIMAudioConverter alloc] init];
+    }
+    
+    return _converter;
+}
+
 #pragma mark task excuting control
 
 #pragma mark task manager
@@ -750,7 +789,7 @@ adpcm_state decode_state;
             PYIMModeNetwork *temp = [_modeServer copy];
             [self.managerAudio addTask:temp];
             
-//            temp = [_modeServer copy];
+            //            temp = [_modeServer copy];
             //            [self.managerVideo addTask:temp];
         }
         return;
@@ -822,6 +861,8 @@ adpcm_state decode_state;
         if(task.cmdID == C2S_LOGIN){
             _modeLogin = [task copy];
             _modeLogin.callback = nil; // 内部使用不反馈
+            if(self.sType!=EServer_Login)
+                task.callback = nil; // 只有登录服务器需要返回，其他如果失败会在登录服务器成功后，重新尝试（登录过程除非主动退出登录，否则一直会尝试登录）
             
             [self addTaskToQueue:opr];
         }else{
@@ -845,6 +886,8 @@ adpcm_state decode_state;
     }
     
     [_queue addOperation:opr];
+    
+    NSLog(@"number of opr in queue %ti", _queue.operations.count);
 }
 
 - (void)removeTasksWithAddr:(long)addr {
@@ -893,6 +936,28 @@ adpcm_state decode_state;
     }];
     
     return opr;
+}
+
+- (void)cancelTask:(NSArray*)tasks {
+    NSMutableArray *temp = [NSMutableArray arrayWithArray:tasks];
+    for(PYIMOperation *opr in _queue.operations){
+        for(PYIMModeNetwork *task in tasks){
+            if(opr.mode.tagSelf == task.tagSelf){
+                [opr cancel];
+                opr.finished = YES;
+                [temp removeObject:task];
+                break;
+            }
+        }
+    }
+    
+    if(self.sType==EServer_Login){
+        if(self.managerAudio)
+            [self.managerAudio cancelTask:temp];
+        
+        if(self.managerVideo)
+            [self.managerVideo cancelTask:temp];
+    }
 }
 
 /// 暂停manger中待执行opr
@@ -1110,7 +1175,7 @@ adpcm_state decode_state;
         dataPartial = nil;
     }
     
-    NSArray *resuts = [PYIMModeNetwork cutPackage:result converter:@[_converter, _converterVideo] callback:^(NSData *dataPart) {
+    NSArray *resuts = [PYIMModeNetwork cutPackage:result converter:kAccount.chatState>0?@[self.converter, self.converterVideo]:nil callback:^(NSData *dataPart) {
         dataPartial = dataPart;
         [kNote writeNote:@"socket read partion data"];
         NSLog(@"socket read partion data");
@@ -1162,18 +1227,23 @@ adpcm_state decode_state;
             }else if(package.cmdID == C2C_VIDEO_FRAME){
                 PYIMModeVideo *first = (PYIMModeVideo*)kVideo_Partion.mode;
                 PYIMModeVideo *other = (PYIMModeVideo*)package.mode;
-                if(first==nil || first.pid==0){
-                    kVideo_Partion = package;
+                if(first==nil){
+                     kVideo_Partion = package;
                 }else if(first.frameID==other.frameID){
                     [first appendPacket:other];
                 }else {
-                    NSLog(@"上一个分包未完成，收到了新的分包数据, frameID:%lld frameIDNew:%lld", first.frameID, other.frameID);
+                    NSLog(@"上一个分包未完成，收到了新的分包数据, finish:%@ frameID:%lld frameIDNew:%lld", first.isFinish?@"YES":@"NO", first.frameID, other.frameID);
+                    kVideo_Partion = package;
                     return;
                 }
                 
-                if(first.isFinish){
+                if(((PYIMModeVideo*)kVideo_Partion.mode).isFinish){
                     [_modeServer finished:[kVideo_Partion copy]];
+                    kVideo_Partion = nil;
                 }
+            }else if(package.cmdID == C2C_CLOSE){
+                [self manageOperationForChat:package];
+                
             }else if(_modeServer){
                 if(!kAccount.hadLogin){
                     NSLog(@"receive data but didn't login so ignored cmd:0x%04x host:%@ port:%d", package.cmdID, kAccount.rspIp, kAccount.rspPort);
@@ -1192,7 +1262,7 @@ adpcm_state decode_state;
 }
 
 - (void)udpSendHandle:(long)tag error:(NSError*)error sock:(GCDAsyncUdpSocket*)sock {
-//    NSLog(@"currentThread %@ result:%@", [NSThread currentThread], error.localizedDescription);
+    //    NSLog(@"currentThread %@ result:%@", [NSThread currentThread], error.localizedDescription);
     PYIMOperation *opr = [self operationWithTag:tag];
     if(opr){
         if(error){
@@ -1214,9 +1284,9 @@ adpcm_state decode_state;
                 kAccount.hadLogin = NO;
                 
                 kAccount.toAccount = 0;
-                kAccount.toIp = nil;
+                kAccount.toIp = @"";
                 kAccount.toPort = 0;
-                kAccount.toLocalIp = nil;
+                kAccount.toLocalIp = @"";
                 kAccount.toLocalPort = 0;
                 kAccount.toState = 0;
                 
@@ -1225,9 +1295,9 @@ adpcm_state decode_state;
                 kAccount.hadLoginVideo = NO;
                 kAccount.hadLoginAudio = NO;
                 
-                kAccount.myIp = nil;
+                kAccount.myIp = @"";
                 kAccount.myPort = 0;
-                kAccount.myLocalIp = nil;
+                kAccount.myLocalIp = @"";
                 kAccount.myLocalPort = 0;
             }
             
@@ -1255,10 +1325,16 @@ adpcm_state decode_state;
         kAccount.toLocalIp = nil;
         kAccount.toLocalPort = 0;
         kAccount.toState = 0;
+        
+        [self.converterVideo dispose];
+        [self.converter dispose];
+        self.converterVideo = nil;
+        self.converter = nil;
     }
 }
 
 #pragma mark heart
+
 //待调试10001服务器重新登录问题
 - (void)loginKeep {
     if(_modeLogin && !self.hadLogin){
@@ -1285,7 +1361,6 @@ adpcm_state decode_state;
 }
 
 - (void)heartKeep {
-    return;
     // 注意这里是在主线程操作
     // 如果任务中没有心跳，触发新心跳
     PYIMOperation *opr = [self operationWithTag:_tagHeart];
@@ -1295,7 +1370,7 @@ adpcm_state decode_state;
     }
     
     // 清理任务超长时间任务（按理不可能存在，任务超时时间不会大于60秒，超时会自动返回释放）
-    [self removeTasksWithAddr:0];  
+    [self removeTasksWithAddr:0];
     
     // 这里对自己端网络进行判断，算1秒的数据量
     if(_queue.operationCount>10 && kAccount.chatState>0){
@@ -1337,7 +1412,10 @@ adpcm_state decode_state;
     
     CmdHeartBeat heart = {0};
     heart.account = htonll_x(kAccount.myAccount);
-    memcpy(heart.localIp, [kAccount.myLocalIp UTF8String], strlen([kAccount.myLocalIp UTF8String]));
+    if(kAccount.myLocalIp)
+        memcpy(heart.localIp, [kAccount.myLocalIp UTF8String], strlen([kAccount.myLocalIp UTF8String]));
+    else
+        NSLog(@"未获取到本地iP");
     heart.localPort = htons_x(kAccount.myLocalPort);
     
     // ip,port 通过已连接的socket对象获取
@@ -1388,24 +1466,24 @@ adpcm_state decode_state;
 
 - (void)heartResponse {
     // 从主线程发起任务，再分发到各个sock对应子线程队列
-//    dispatch_async(dispatch_get_main_queue(), ^{
-        CmdC2CHeartBeatRsp body = {0};
-        body.account = htonll_x(kAccount.myAccount);
-        memcpy(body.ip, [kAccount.myIp UTF8String], strlen([kAccount.myIp UTF8String]));
-        body.port = htons_x(kAccount.myPort);
-        memcpy(body.localIp, [kAccount.myLocalIp UTF8String], strlen([kAccount.myLocalIp UTF8String]));
-        body.localPort = htons_x(kAccount.myLocalPort);
-        body.toAccount = htonll_x(kAccount.toAccount);
-        
-        PYIMModeMedia *media = [[PYIMModeMedia alloc] init];
-        media.cmdID = C2C_HEART_BEAT_RSP;
-        
-        media.dataParam = [NSData dataWithBytes:&body length:sizeof(CmdC2CHeartBeatRsp)];
-        PYIMModeNetwork *network = [[PYIMModeNetwork alloc] init];
-        network.media = media;
-        
-        [[PYIMNetworkManager sharedInstance] addTask:network];
-//    });
+    //    dispatch_async(dispatch_get_main_queue(), ^{
+    CmdC2CHeartBeatRsp body = {0};
+    body.account = htonll_x(kAccount.myAccount);
+    memcpy(body.ip, [kAccount.myIp UTF8String], strlen([kAccount.myIp UTF8String]));
+    body.port = htons_x(kAccount.myPort);
+    memcpy(body.localIp, [kAccount.myLocalIp UTF8String], strlen([kAccount.myLocalIp UTF8String]));
+    body.localPort = htons_x(kAccount.myLocalPort);
+    body.toAccount = htonll_x(kAccount.toAccount);
+    
+    PYIMModeMedia *media = [[PYIMModeMedia alloc] init];
+    media.cmdID = C2C_HEART_BEAT_RSP;
+    
+    media.dataParam = [NSData dataWithBytes:&body length:sizeof(CmdC2CHeartBeatRsp)];
+    PYIMModeNetwork *network = [[PYIMModeNetwork alloc] init];
+    network.media = media;
+    
+    [[PYIMNetworkManager sharedInstance] addTask:network];
+    //    });
 }
 
 // 设置任务发送端口ip（部分任务需要）
@@ -1449,6 +1527,11 @@ adpcm_state decode_state;
 
 + (void)removeTasksWithAddr:(long)addr {
     [[self sharedInstance] removeTasksWithAddr:addr];
+}
+
++ (void)cancelTask:(NSArray*)tasks {
+    if(tasks.count>0)
+        [[self sharedInstance] cancelTask:tasks];
 }
 
 @end

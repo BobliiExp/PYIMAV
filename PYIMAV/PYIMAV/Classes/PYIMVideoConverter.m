@@ -19,6 +19,7 @@
 #include "libswscale/swscale.h"
 
 static uint8_t *g_vedio_buffer;
+static size_t g_video_buffer_length;
 
 @interface PYIMVideoConverter() {
     x264_t                  *pX264Handle;
@@ -32,6 +33,11 @@ static uint8_t *g_vedio_buffer;
     STMVideoFrameYUV *frameYUV;
     AVCodecContext *codecCtx;
     AVFrame *pFrame;
+    
+    int fps_encode_latest;
+    int width_encode, height_encode;
+    
+    int64_t frameNo;
 }
 
 @end
@@ -41,10 +47,11 @@ static uint8_t *g_vedio_buffer;
 - (instancetype)init {
     self = [super init];
     if(self){
+        frameNo = 0; // pts用
+        
         avcodec_register_all();
         
         AVCodec *codec = avcodec_find_decoder(AV_CODEC_ID_H264);
-        
         codecCtx = avcodec_alloc_context3(codec);
         //更改g_pCodecCtx的一些成员变量的值，您应该从解码方得到这些变量值：
         codecCtx->time_base.num = 1; //这两行：一秒钟帧数
@@ -61,7 +68,11 @@ static uint8_t *g_vedio_buffer;
             pFrame = av_frame_alloc();// Allocate video frame
         }
         
-        avcodec_open2(codecCtx, codec, nil);
+//        avcodec_open2(codecCtx, codec, nil);
+        
+        fps_encode_latest = VIDEO_FPS;
+        width_encode = ENCODE_FRMAE_WIDTH;
+        height_encode = ENCODE_FRMAE_HEIGHT;
         
         [self setupConverter];
     }
@@ -69,7 +80,26 @@ static uint8_t *g_vedio_buffer;
     return self;
 }
 
+- (void)closeConverter {
+    if(pPicOut){
+        free(pPicOut);
+        pPicOut = NULL;
+    }
+    
+    if(pX264Param){
+        free(pX264Param);
+        pX264Param = nil;
+    }
+    
+    if(pX264Handle){
+        x264_encoder_close(pX264Handle);
+        pX264Handle = nil;
+    }
+}
+
 - (void)setupConverter {
+    [self closeConverter];
+    
     pX264Param = (x264_param_t *)malloc(sizeof(x264_param_t));
     assert(pX264Param);
     /* 配置参数
@@ -82,8 +112,8 @@ static uint8_t *g_vedio_buffer;
     
     pX264Param->i_level_idc = 30; // 编码复杂度
     // 视频选项
-    pX264Param->i_width   = ENCODE_FRMAE_WIDTH; // 要编码的图像宽度.
-    pX264Param->i_height  = ENCODE_FRMAE_HEIGHT; // 要编码的图像高度
+    pX264Param->i_width   = width_encode; // 要编码的图像宽度.
+    pX264Param->i_height  = height_encode; // 要编码的图像高度
     
     pX264Param->b_deterministic = 1;
     
@@ -93,10 +123,10 @@ static uint8_t *g_vedio_buffer;
     pX264Param->i_csp = X264_CSP_I420;//X264_CSP_NV12;//X264_CSP_I420;
     
     // 帧率，值越小质量越好
-    pX264Param->i_fps_num  = VIDEO_FPS; // 帧率分子
+    pX264Param->i_fps_num  = fps_encode_latest; // 帧率分子
     pX264Param->i_fps_den  = 1; // 帧率分母
     pX264Param->i_bframe = 0;
-    pX264Param->i_keyint_max = VIDEO_FPS * 2;
+    pX264Param->i_keyint_max = fps_encode_latest * 2;
     
     //i_rc_method很关键，判断cpu核数，如果为单核，则使用X264_RC_CQP，减少编码时间，但相应增大了编码后的图像体积，增大后约4-5k/帧，增大前约2-3k。
     //如果为多核，则使用X264_RC_CRF，因为多核本来就快，使用最佳压缩率最好。
@@ -162,6 +192,15 @@ static uint8_t *g_vedio_buffer;
     iNal = 0;
     pNals = NULL;
     
+    /* ---------------------------------------------------------------------- */
+    // 打开编码器句柄,通过x264_encoder_parameters得到设置给X264
+    // 的参数.通过x264_encoder_reconfig更新X264的参数
+    pX264Handle = x264_encoder_open(pX264Param);
+    if(!pX264Handle){
+        NSLog(@"x264 handle open failed width:%d height:%d failed by size ???", width_encode, height_encode);
+        return;
+    }
+    
     pPicIn = (x264_picture_t *)malloc(sizeof(x264_picture_t));
     memset(pPicIn, 0, sizeof(x264_picture_t));
     // TODO:这里有内存泄漏问题，后面要分析处理
@@ -172,17 +211,13 @@ static uint8_t *g_vedio_buffer;
     memset(pPicOut, 0, sizeof(x264_picture_t));
     x264_picture_init(pPicOut);
     
-    /* ---------------------------------------------------------------------- */
-    // 打开编码器句柄,通过x264_encoder_parameters得到设置给X264
-    // 的参数.通过x264_encoder_reconfig更新X264的参数
-    pX264Handle = x264_encoder_open(pX264Param);
-    assert(pX264Handle);
+    
 }
 
+#pragma mark - data management
 
-
-+ (NSData*)convertSample:(CMSampleBufferRef)sample {
-    NSData *data = nil;
++ (PYIMModeVideo*)convertSample:(CMSampleBufferRef)sample {
+    PYIMModeVideo *video = [[PYIMModeVideo alloc] init];
     
     @autoreleasepool{
         CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sample);
@@ -227,34 +262,86 @@ static uint8_t *g_vedio_buffer;
         
         CVPixelBufferUnlockBaseAddress(imageBuffer, 0);
         
-        if (!g_vedio_buffer){
-            g_vedio_buffer = (uint8_t *)malloc(video_size);
+        size_t out_width = width;
+        size_t out_height = height;
+        size_t out_size = video_size;
+        int ret = 0;
+        
+        if ((int)(width * height) > (int)(ENCODE_FRMAE_WIDTH * ENCODE_FRMAE_HEIGHT)) {
+            if (!g_vedio_buffer){
+                g_vedio_buffer = (uint8_t *)malloc(video_size);
+                g_video_buffer_length = video_size;
+            }
+            
+            if(g_video_buffer_length<video_size){
+                realloc(g_vedio_buffer, video_size);
+                g_video_buffer_length = video_size;
+            }
+            
+            float x = ((float)width)/ENCODE_FRMAE_WIDTH;
+            float y = ((float)height)/ENCODE_FRMAE_HEIGHT;
+            if (x >= y)
+            {
+                out_width = ENCODE_FRMAE_WIDTH;
+                out_height = (int)(((float)height)/x);
+            }
+            else
+            {
+                out_height = ENCODE_FRMAE_HEIGHT;
+                out_width = (int)(((float)width)/y);
+            }
+            
+            out_size = out_width*out_height*3/2;
+            bzero(g_vedio_buffer, video_size);
+            
+            ret = resize_frame(yuv420_data, (int)width, (int)height, g_vedio_buffer, (int)out_width, (int)out_height);
+            video.media = [NSData dataWithBytes:g_vedio_buffer length:out_size];
+        } else {
+            video.media = [NSData dataWithBytes:yuv420_data length:out_size];
         }
         
-        // picked with 640*480 resize to 320*240 for mobile device
-        bzero(g_vedio_buffer, video_size);
-        int ret = resize_frame(yuv420_data, (int)width, (int)height, g_vedio_buffer, (int)width/2, (int)height/2);
         if(ret==0){
-            data = [NSData dataWithBytes:g_vedio_buffer length:video_size];
+            video.width = (int)out_width;
+            video.height = (int)out_height;
         }
+        
         free(yuv420_data);
     }
     
-    return data;
+    return video;
 }
 
-- (NSData*)encode:(NSData*)data {
+- (NSData*)encode:(PYIMModeVideo*)video {
     // 整合编码数据
     NSMutableData *mData = nil;
-    
     @synchronized(self){
+        NSData *data = video.media;
+        
+        // 尝试更新fps
+        if(video.fps != pX264Param->i_fps_num ||
+           video.width != pX264Param->i_width ||
+           video.height != pX264Param->i_height ||
+           pX264Handle==nil){
+            
+            fps_encode_latest = video.fps;
+            width_encode = video.width;
+            height_encode = video.height;
+            [self setupConverter];
+            
+            if(pX264Handle==nil)
+                return nil;
+        }
+            
         pPicIn->img.i_plane = 3;
         pPicIn->img.plane[0] = (uint8_t*)data.bytes; // yuv420_data <==> pInFrame
-        pPicIn->img.plane[1] = pPicIn->img.plane[0] + ENCODE_FRMAE_WIDTH * ENCODE_FRMAE_HEIGHT;
-        pPicIn->img.plane[2] = pPicIn->img.plane[1] + (ENCODE_FRMAE_WIDTH * ENCODE_FRMAE_HEIGHT / 4);
-        pPicIn->img.i_stride[0] = ENCODE_FRMAE_WIDTH;
-        pPicIn->img.i_stride[1] = ENCODE_FRMAE_WIDTH / 2;
-        pPicIn->img.i_stride[2] = ENCODE_FRMAE_WIDTH / 2;
+        pPicIn->img.plane[1] = pPicIn->img.plane[0] + width_encode * height_encode;
+        pPicIn->img.plane[2] = pPicIn->img.plane[1] + (width_encode * height_encode / 4);
+        pPicIn->img.i_stride[0] = width_encode;
+        pPicIn->img.i_stride[1] = width_encode / 2;
+        pPicIn->img.i_stride[2] = width_encode / 2;
+        
+        pPicIn->i_pts = (int64_t)(frameNo * pX264Param->i_fps_den);
+        pPicIn->i_qpplus1 = 0;
         
         // 编码
         int frame_size = x264_encoder_encode(pX264Handle, &pNals, &iNal, pPicIn, pPicOut);
@@ -263,16 +350,30 @@ static uint8_t *g_vedio_buffer;
             for (int i = 0; i < iNal; ++i) {
                 [mData appendBytes:pNals[i].p_payload length:pNals[i].i_payload];
             }
+            
+            frameNo++;
         }
     }
     
     return mData;
 }
 
-- (NSData*)decode:(char*)buffer length:(int)length {
+- (NSData*)decode:(char*)buffer length:(int)length video:(PYIMModeVideo*)video {
     NSData *data = nil;
     
     @synchronized(self){
+        if(video.fps != codecCtx->time_base.den){
+            codecCtx->time_base.den = video.fps;
+        }
+        
+        if(video.width != codecCtx->width){
+            codecCtx->width = video.width;
+        }
+        
+        if(video.height != codecCtx->height){
+            codecCtx->height = video.height;
+        }
+        
         AVPacket packet;
         av_new_packet(&packet, length);
         
@@ -358,19 +459,32 @@ static uint8_t *g_vedio_buffer;
 
 - (void)dispose {
     // 清除图像区域
-    x264_picture_clean(pPicIn);
-    // 关闭编码器句柄
-    x264_encoder_close(pX264Handle);
-    pX264Handle = NULL;
-    free(pPicIn);
-    pPicIn = NULL;
-    free(pPicOut);
-    pPicOut = NULL;
-    free(pX264Param);
-    pX264Param = NULL;
+    if(pPicIn) {
+        //        x264_picture_clean(pPicIn); pPicIn->img.plane[0] had freed when used a nsdata see: https://stackoverflow.com/questions/43798255/x264-encoding-use-x264-picture-clean-crash
+        free(pPicIn);
+        pPicIn = NULL;
+    }
     
-    free(g_vedio_buffer);
-    g_vedio_buffer = NULL;
+    // 关闭编码器句柄
+    if(pX264Handle){
+        x264_encoder_close(pX264Handle);
+        pX264Handle = NULL;
+    }
+    
+    if(pPicOut){
+        free(pPicOut);
+        pPicOut = NULL;
+    }
+    
+    if(pX264Param){
+        free(pX264Param);
+        pX264Param = NULL;
+    }
+    
+    if(g_vedio_buffer){
+        free(g_vedio_buffer);
+        g_vedio_buffer = NULL;
+    }
 }
 
 struct SwsContext *img_convert_ctx = NULL;

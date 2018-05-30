@@ -85,4 +85,7 @@ static NSInteger const kDefaultSize = 10;
     self.elementData = nil;
 }
 
+- (void)cleanSelf {
+    NSLog(@"重定向，处理了videoController没有定义：%@崩溃问题", NSStringFromSelector(_cmd));
+}
 @end

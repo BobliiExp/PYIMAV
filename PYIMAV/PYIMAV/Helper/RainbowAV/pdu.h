@@ -25,15 +25,25 @@ extern "C" {
 
 // �ṹ����
 #pragma pack(1)
-
+    
+    
+enum ClientType {
+    Client_None = 0,
+    Client_Android,
+    Client_iOS,
+    Client_WP,
+    Client_Web
+};
+    
 typedef struct {
-	uint16_t TotalLen;
-	uint16_t CmdId;
-	uint16_t SeqId;
-	uint16_t CmdStatus;
+    uint16_t TotalLen;
+    uint16_t CmdId;
+    uint16_t SeqId;
+    uint16_t CmdStatus;
+//    uint16_t Client;
 } Header;
-
-union bswap_helper
+    
+    union bswap_helper
 {
 	int64_t i64;
 	int32_t i32[2];

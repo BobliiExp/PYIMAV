@@ -78,7 +78,6 @@
         uint8_t swapBuf[P2P_MAX_BUF_SIZE];        // 交换缓冲区
         int ret = decodeVideoFrame(recvBuf, recvLen, &header, &rsp, swapBuf, &swapLen);
         if(ret == 0){
-            self.media = [NSData dataWithBytes:swapBuf length:swapLen];
             self.frameLen = rsp.frameLen;
             self.packs = rsp.packs;
             self.pid = rsp.pid;
@@ -89,16 +88,19 @@
             self.height = rsp.height;
             self.fps = rsp.fps;
             self.bitrate = rsp.bitrate;
-            self.angle = rsp.angle;
+//            self.angle = rsp.angle;
             self.mirror = rsp.mirror;
+            self.angle = rsp.client == Client_Android ? -rsp.angle : rsp.angle;
             
-//            self.timeRecordStart = rsp.timeStart;
-//            self.timeRecordEnd = rsp.timeEnd;
-        }
-        
-        if(_pid==0){
-            kAccount.frameID = self.frameID; // 后面是同一个frame才收集
-            [self appendPacket:self];
+            //            self.timeRecordStart = rsp.timeStart;
+            //            self.timeRecordEnd = rsp.timeEnd;
+            
+            if(rsp.packs==1){
+                self.media = [self.converter decode:swapBuf length:swapLen video:self];
+            }else {
+                self.media = [NSData dataWithBytes:swapBuf length:swapLen];
+            }
+            
         }
     }
     
@@ -117,26 +119,41 @@
         uint8_t swapBuf[P2P_MAX_BUF_SIZE];        // 交换缓冲区
         int ret = decodeVideoFrameEx(recvBuf, recvLen, &header, &rsp, swapBuf, &swapLen);
         if(ret == 0){
-            // TODO: 这里解压缩数据
-            if(swapLen>0){
-                self.media = [(PYIMVideoConverter*)converter decode:(char*)swapBuf length:swapLen];
-            }
-            
-            NSLog(@"receive data size:%d decodeSize:%ti seqID:%d", swapLen, self.media.length, header.SeqId);
-            
             self.width = rsp.width;
             self.height = rsp.height;
             self.fps = rsp.fps;
             self.bitrate = rsp.bitrate;
-            self.angle = rsp.angle;
+//            self.angle = rsp.angle;
+            
+            self.angle = rsp.client == Client_Android ? -rsp.angle : rsp.angle;
+//            [self convertAngle:rsp.angle client:header.Client];
             self.mirror = rsp.mirror;
             
 //            self.timeRecordStart = rsp.timeStart;
 //            self.timeRecordEnd = rsp.timeEnd;
+            
+            // TODO: 这里解压缩数据
+            if(swapLen>0){
+                self.media = [(PYIMVideoConverter*)converter decode:(char*)swapBuf length:swapLen video:self];
+            }
+            
+            NSLog(@"receive data size:%d decodeSize:%ti fps:%d bitrate:%d width:%d height:%d angle:%d mirror:%d client:%d seqID:%d", swapLen, self.media.length, rsp.fps, rsp.bitrate, rsp.width, rsp.height, rsp.angle, rsp.mirror, rsp.client, header.SeqId);
         }
     }
     
     return self;
+}
+
+- (void)convertAngle:(int)angle client:(uint16_t)client {
+    switch (client) {
+        case Client_Android:
+            _angle = -angle;
+            break;
+            
+        default:
+            _angle = angle;
+            break;
+    }
 }
 
 - (NSMutableArray<PYIMModeVideo*>*)mArrPacket {
@@ -152,23 +169,22 @@
     
     if(self.isFinish){
         // 排个序
-        NSSortDescriptor *order = [[NSSortDescriptor alloc] initWithKey:@"" ascending:YES];
+        NSSortDescriptor *order = [[NSSortDescriptor alloc] initWithKey:@"pid" ascending:YES];
         NSArray *arr = [self.mArrPacket sortedArrayUsingDescriptors:@[order]];
-        NSMutableData *mData = [NSMutableData data];
+        NSMutableData *mData = [NSMutableData dataWithData:self.media];
+        
         for(PYIMModeVideo *video in arr){
             [mData appendData:video.media];
         }
         
         if(mData.length>0){
-            self.media = [self.converter decode:(char*)mData.bytes length:(int)mData.length];
+            self.media = [self.converter decode:(char*)mData.bytes length:(int)mData.length video:self];
         }
-        
-        kAccount.frameID = 0;
     }
 }
 
 - (BOOL)isFinish {
-    return self.packs==self.mArrPacket.count;
+    return self.packs==1 || (self.packs==self.mArrPacket.count+1);
 }
 
 - (id)copyWithZone:(NSZone *)zone {

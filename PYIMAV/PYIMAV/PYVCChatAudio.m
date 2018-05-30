@@ -35,6 +35,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *labName;
 
 @property (nonatomic, strong) PYIMAudioController *audioController; ///< 语音模块
+@property (nonatomic, weak) PYIMModeNetwork *taskGetAccount;  ///< 任务
 
 @end
 
@@ -106,7 +107,7 @@
             }
         }];
     }else {
-        PYIMModeMedia *media = [PYIMAPIChat chatGetAccount:self.toAccount type:P2P_CHAT_TYPE_AUDIO callback:^(PYIMError *error) {
+        self.taskGetAccount = [PYIMAPIChat chatGetAccount:self.toAccount type:P2P_CHAT_TYPE_AUDIO callback:^(PYIMError *error) {
             if(error.success){
                 NSLog(@"C2S_HOLE 打洞成功");
                 
@@ -124,11 +125,11 @@
                     }
                 }];
             }else {
-                [self caneclWithError:error isLocal:YES];
+                [self caneclWithError:error isLocal:NO];
             }
         }];
         
-        media.resentCount = 3; // 30秒都没有成功可能对方不在线
+        self.taskGetAccount.media.resentCount = 3; // 30秒都没有成功可能对方不在线
     }
 }
 
@@ -259,8 +260,11 @@
     if(self.audioController==nil)return;
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    if(self.taskGetAccount){
+        [PYIMAPIChat cancelTask:@[self.taskGetAccount]];
+    }
     
-    if(isLocal && !self.isLocal){
+    if(isLocal && !self.isLocal && self.taskGetAccount==nil){
         [PYIMAPIChat chatC2CRequestOpr:self.audioController.isPlaying ? C2C_CLOSE: C2C_CANCEL_REQUEST callback:nil];
     }
     

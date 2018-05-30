@@ -115,6 +115,7 @@ typedef struct {
 	uint16_t packs;//帧的包数
 	uint16_t pid;//包ID
 	uint16_t packLen;//包长度
+    uint16_t client;
     
 //    uint64_t timeStart; // 起始时间戳
 //    uint64_t timeEnd;   // 结束时间戳
@@ -129,6 +130,7 @@ typedef struct {
 	uint16_t bitrate;
 	uint16_t angle;
 	uint16_t mirror;
+    uint16_t client;
     
 //    uint64_t timeStart; // 起始时间戳
 //    uint64_t timeEnd;   // 结束时间戳

@@ -1,6 +1,24 @@
 PODS:
+  - AFNetworking (3.2.1):
+    - AFNetworking/NSURLSession (= 3.2.1)
+    - AFNetworking/Reachability (= 3.2.1)
+    - AFNetworking/Security (= 3.2.1)
+    - AFNetworking/Serialization (= 3.2.1)
+    - AFNetworking/UIKit (= 3.2.1)
+  - AFNetworking/NSURLSession (3.2.1):
+    - AFNetworking/Reachability
+    - AFNetworking/Security
+    - AFNetworking/Serialization
+  - AFNetworking/Reachability (3.2.1)
+  - AFNetworking/Security (3.2.1)
+  - AFNetworking/Serialization (3.2.1)
+  - AFNetworking/UIKit (3.2.1):
+    - AFNetworking/NSURLSession
   - CocoaAsyncSocket (7.6.3)
   - FBRetainCycleDetector (0.1.4)
+  - FMDB (2.7.2):
+    - FMDB/standard (= 2.7.2)
+  - FMDB/standard (2.7.2)
   - libextobjc (0.4.1):
     - libextobjc/EXTADT (= 0.4.1)
     - libextobjc/EXTConcreteProtocol (= 0.4.1)
@@ -36,28 +54,46 @@ PODS:
     - libextobjc/RuntimeExtensions
   - libextobjc/RuntimeExtensions (0.4.1)
   - libextobjc/UmbrellaHeader (0.4.1)
+  - MBProgressHUD (1.1.0)
   - MLeaksFinder (1.0.0):
     - FBRetainCycleDetector
+  - RSSwizzle (0.1.0)
+  - SVProgressHUD (2.2.5)
 
 DEPENDENCIES:
+  - AFNetworking
   - CocoaAsyncSocket
   - FBRetainCycleDetector
+  - FMDB
   - libextobjc
+  - MBProgressHUD
   - MLeaksFinder
+  - RSSwizzle
+  - SVProgressHUD
 
 SPEC REPOS:
   https://github.com/CocoaPods/Specs.git:
+    - AFNetworking
     - CocoaAsyncSocket
     - FBRetainCycleDetector
+    - FMDB
     - libextobjc
+    - MBProgressHUD
     - MLeaksFinder
+    - RSSwizzle
+    - SVProgressHUD
 
 SPEC CHECKSUMS:
+  AFNetworking: b6f891fdfaed196b46c7a83cf209e09697b94057
   CocoaAsyncSocket: eafaa68a7e0ec99ead0a7b35015e0bf25d2c8987
   FBRetainCycleDetector: 46f8179bbb1c587deee3ea838a1a3ee02acf5015
+  FMDB: 6198a90e7b6900cfc046e6bc0ef6ebb7be9236aa
   libextobjc: a650fc1bf489a3d3a9bc2e621efa3e1006fc5471
+  MBProgressHUD: e7baa36a220447d8aeb12769bf0585582f3866d9
   MLeaksFinder: 8c435bd2f6d070af18cff082b503b21adc130fc0
+  RSSwizzle: d561958f595028bfcef98c7d55c318b3878a61c6
+  SVProgressHUD: 1428aafac632c1f86f62aa4243ec12008d7a51d6
 
-PODFILE CHECKSUM: c48638c61fc9dc1419d8b747ea90e39170430558
+PODFILE CHECKSUM: 3200b3305a133f4d48ed9f13f1d3d4e205bd5ac6
 
 COCOAPODS: 1.5.0

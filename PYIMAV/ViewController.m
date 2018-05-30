@@ -17,6 +17,11 @@
 
 #import "PYIMAccount.h"
 
+// hud
+#import <SVProgressHUD.h>
+// swizzle 这里引入控制按钮快速点击多次问题
+#import "UIButton+Swizzle.h"
+
 @interface ViewController ()
 
 @property (weak, nonatomic) IBOutlet UIButton *btnAudio;
@@ -173,6 +178,8 @@
 }
 
 - (IBAction)btnAudioClicked:(id)sender {
+    NSLog(@"点击了: %@",[NSDate date]);
+    
     if(!self.switchTest.isOn && (self.txtFieldTo.text==nil || self.txtFieldTo.text.length==0)){
         [self.view makeToast:@"请输入对方账号"];
         return;
@@ -203,13 +210,16 @@
     [self resignInput];
     _labDesc.text = kAccount.hadLogin ? @"退出登录中" : @"登录中";
     
+    
     if(kAccount.hadLogin){
+        [SVProgressHUD showWithStatus:_labDesc.text];
         [PYIMAPIChat chatLogout:^(PYIMError *error) {
             if(error.success){
                 [self setupUI];
                 [self.btnLogin setTitle:@"登录" forState:UIControlStateNormal];
             }
             
+            [SVProgressHUD dismiss];
             _labDesc.text = error.success ? @"":@"退出登录失败";
         }];
     }else {
@@ -219,6 +229,7 @@
             return;
         }
         
+        [SVProgressHUD showWithStatus:_labDesc.text];
         [PYIMAPIChat chatConnectHost:self.txtFieldServer.text port:10000];
         [PYIMAPIChat chatLogin:[self.txtFieldAccount.text intValue] pwd:@"123456" callback:^(PYIMError *error) {
             // 统一操作回调
@@ -226,9 +237,12 @@
                 [self setupUI];
                 [self.btnLogin setTitle:[NSString stringWithFormat:@"退出登录(%@)", self.txtFieldAccount.text] forState:UIControlStateNormal];
                 _labDesc.text = nil;
+                
             }else {
                 _labDesc.text = error.success ? @"":[NSString stringWithFormat:@"登录失败 %d", error.rspPort];
             }
+            
+            [SVProgressHUD dismiss];
         }];
     }
 }

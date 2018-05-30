@@ -9,7 +9,6 @@
 #import <Foundation/Foundation.h>
 #import "PYIMModeAudio.h"
 
-
 //系统错误
 #define    EVENT_ERROR  -1
 //p2p连接失败
@@ -81,7 +80,6 @@
 
 extern ushort const kCMD_Re_ServerMsg;
 
-
 typedef NS_ENUM(NSInteger, PYServerType) {
     EServer_None,
     EServer_Login,
@@ -96,6 +94,7 @@ typedef NS_ENUM(NSInteger, PYServerType) {
 @property (nonatomic, assign) uint16_t cmdID;       ///< eg: C2C_AUDIO_FRAME
 @property (nonatomic, readonly, assign) uint16_t seqID;       ///< 消息序列号，0开始自增，最大65534
 @property (nonatomic, assign) uint16_t cmdStatus;   ///< 消息命令状态应答状态，返回时判断是否成功等情况
+//@property (nonatomic, assign) uint16_t client; ///< 客户端类型
 
 @property (nonatomic, assign) BOOL success;    ///< 是否操作成功
 @property (nonatomic, copy) NSString *errDesc;    ///< 错误描述，内部根据cmd解析
@@ -164,7 +163,6 @@ typedef void(^NetWorkCallback)(PYIMError *error);    /// API层统一回调
 // udp发送时使用的ip，端口
 @property (nonatomic, copy) NSString *hostServer;
 @property (nonatomic, assign) uint16_t portServer;
-
 
 - (void)finished:(PYIMError*)error;
 - (void)finishedWithCode:(uint16_t)errorCode;

@@ -19,4 +19,6 @@
 
 - (void)dispose;
 
+- (void)cleanSelf; // test runtime invoke
+
 @end

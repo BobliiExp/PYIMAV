@@ -38,7 +38,7 @@
                         <constraint firstAttribute="width" constant="60" id="tMP-gm-C8W"/>
                     </constraints>
                     <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                    <nil key="textColor"/>
+                    <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     <nil key="highlightedColor"/>
                 </label>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="CbH-kx-Nso">
@@ -47,12 +47,13 @@
                         <constraint firstAttribute="width" constant="45" id="CsL-kh-Lh3"/>
                         <constraint firstAttribute="height" constant="45" id="Gc6-pY-SX7"/>
                     </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <state key="normal" title="cancel"/>
                     <connections>
                         <action selector="btnCancelClicked:" destination="-1" eventType="touchUpInside" id="0qY-fb-JLA"/>
                     </connections>
                 </button>
-                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="TP0-4h-bsm">
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="ic_avatar_default" translatesAutoresizingMaskIntoConstraints="NO" id="TP0-4h-bsm">
                     <rect key="frame" x="10" y="10" width="60" height="60"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="60" id="KbS-Fs-TTh"/>
@@ -66,7 +67,7 @@
                         <constraint firstAttribute="width" constant="150" id="zFc-VP-Lwx"/>
                     </constraints>
                     <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                    <nil key="textColor"/>
+                    <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     <nil key="highlightedColor"/>
                 </label>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Bob" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ELE-Ct-Byt">
@@ -75,7 +76,7 @@
                         <constraint firstAttribute="height" constant="30" id="dlA-ko-PHn"/>
                     </constraints>
                     <fontDescription key="fontDescription" type="system" pointSize="24"/>
-                    <nil key="textColor"/>
+                    <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     <nil key="highlightedColor"/>
                 </label>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="正在等待对方接受邀请..." textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gEy-BN-T9N">
@@ -84,7 +85,7 @@
                         <constraint firstAttribute="height" constant="15" id="Whj-vu-00f"/>
                     </constraints>
                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                    <nil key="textColor"/>
+                    <color key="textColor" cocoaTouchSystemColor="tableCellGroupedBackgroundColor"/>
                     <nil key="highlightedColor"/>
                 </label>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="9F4-bf-zAZ">
@@ -93,6 +94,7 @@
                         <constraint firstAttribute="width" constant="40" id="oaN-Fh-X1s"/>
                         <constraint firstAttribute="height" constant="40" id="x8C-0G-irl"/>
                     </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="12"/>
                     <state key="normal" title="switch"/>
                     <connections>
                         <action selector="btnAudioClicked:" destination="-1" eventType="touchUpInside" id="UbD-Hk-76f"/>
@@ -136,4 +138,7 @@
             <point key="canvasLocation" x="24.5" y="51.5"/>
         </view>
     </objects>
+    <resources>
+        <image name="ic_avatar_default" width="30" height="30"/>
+    </resources>
 </document>

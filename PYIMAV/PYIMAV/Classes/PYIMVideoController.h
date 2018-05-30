@@ -27,9 +27,6 @@
  */
 - (instancetype)initWithBGView:(UIView*)viewbg front:(UIView*)viewfront;
 
-/// 准备播放环境，放到viewDidAppear
-- (void)adjustDisplay;
-
 /// 切换录制摄像头
 - (void)switchCamera;
 

@@ -445,6 +445,7 @@ int encodeVideoFrame(uint16_t SeqId, uint16_t CmdStatus, CmdVideoFrame *pBody, u
 	body->packs = htons_x(pBody->packs);
 	body->pid = htons_x(pBody->pid);
 	body->packLen = htons_x(pBody->packLen);
+    body->client = htons_x(Client_iOS);
 	memcpy(buf+sizeof(Header)+sizeof(CmdVideoFrame), data, data_len);
 	return 0;
 }
@@ -481,6 +482,8 @@ int decodeVideoFrame(uint8_t *buf, uint16_t len, Header *pHeader, CmdVideoFrame 
 	pBody->packs = ntohs_x(body->packs);
 	pBody->pid = ntohs_x(body->pid);
 	pBody->packLen = ntohs_x(body->packLen);
+    pBody->client = ntohs_x(body->client);
+    
 	if ((uint16_t)(pHeader->TotalLen - iTotalLen) > (uint16_t)(*data_len))
 	{
 		return -1;
@@ -517,6 +520,8 @@ int encodeVideoFrameEx(uint16_t SeqId, uint16_t CmdStatus, CmdVideoFrameEx *pBod
 	body->bitrate = htons_x(pBody->bitrate);
 	body->angle = htons_x(pBody->angle);
 	body->mirror = htons_x(pBody->mirror);
+    body->client = htons_x(Client_iOS);
+    
 	memcpy(buf+sizeof(Header)+sizeof(CmdVideoFrameEx), data, data_len);
 	return 0;
 }
@@ -546,6 +551,8 @@ int decodeVideoFrameEx(uint8_t *buf, uint16_t len, Header *pHeader, CmdVideoFram
 	pBody->bitrate = ntohs_x(body->bitrate);
 	pBody->angle = ntohs_x(body->angle);
 	pBody->mirror = ntohs_x(body->mirror);
+    pBody->client = ntohs_x(body->client);
+    
 	if ((uint16_t)(pHeader->TotalLen - iTotalLen) > (uint16_t)(*data_len))
 	{
 		return -1;

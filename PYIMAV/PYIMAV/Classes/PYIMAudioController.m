@@ -213,11 +213,12 @@ typedef struct MyAUGraphStruct{
     self.recordEnd = block;
 }
 
-/// 配置音频录制会话
+/// 配置音频录制会话，默认听筒
 - (void)setupSession{
     AVAudioSession* session = [AVAudioSession sharedInstance];
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayAndRecord error:nil];
 //    [session overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];
-    [session setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionDefaultToSpeaker error:nil];
+//    [session setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionDefaultToSpeaker error:nil];
     [session setActive:YES error:nil];
     
     _speakerEnable = YES;

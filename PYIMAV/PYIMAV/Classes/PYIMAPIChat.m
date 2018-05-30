@@ -27,6 +27,10 @@
 
 @implementation PYIMAPIChat
 
++ (void)cancelTask:(NSArray*)tasks {
+    [PYIMNetworkManager cancelTask:tasks];
+}
+
 + (void)chatConnectHost:(NSString*)host port:(ushort)port {
     [PYIMNetworkManager connectWithHost:host port:port];
 }
@@ -39,16 +43,17 @@
     [PYIMNetworkManager addTask:taskCallback];
 }
 
-+ (void)addTask:(PYIMModeMedia*)media callback:(NetWorkCallback)callback {
++ (PYIMModeNetwork*)addTask:(PYIMModeMedia*)media callback:(NetWorkCallback)callback {
     PYIMModeNetwork *network = [[PYIMModeNetwork alloc] init];
     network.callback = callback;
     network.media = media;
     
     [PYIMNetworkManager addTask:network];
+    return network;
 }
 
 /// 登录
-+ (PYIMModeMedia*)chatLogin:(uint64_t)account pwd:(NSString *)pwd callback:(NetWorkCallback)callback {
++ (PYIMModeNetwork*)chatLogin:(uint64_t)account pwd:(NSString *)pwd callback:(NetWorkCallback)callback {
     PYIMModeMedia *media = [[PYIMModeMedia alloc] init];
     media.cmdID = C2S_LOGIN;
     
@@ -68,13 +73,11 @@
     // ip,port 通过已连接的socket对象获取
     media.dataParam = [NSData dataWithBytes:&login length:sizeof(CmdLogin)];
     
-    [self addTask:media callback:callback];
-    
-    return media;
+    return [self addTask:media callback:callback];
 }
 
 /// 退出登录
-+ (PYIMModeMedia*)chatLogout:(NetWorkCallback)callback {
++ (PYIMModeNetwork*)chatLogout:(NetWorkCallback)callback {
     kAccount.chatState = 0;
     
     if (kAccount.myAccount != 0 && kAccount.toAccount != 0) {
@@ -116,13 +119,11 @@
     media.cmdID = C2S_LOGOUT;
     
     media.dataParam = [NSData dataWithBytes:&body length:sizeof(CmdLogout)];
-    [self addTask:media callback:callback];
-    
-    return media;
+   return [self addTask:media callback:callback];
 }
 
 /// // 获取对方账号状态 发起通话请求 类型  1视频  2语音
-+ (PYIMModeMedia*)chatGetAccount:(uint64_t)to type:(int16_t)type callback:(NetWorkCallback)callback {
++ (PYIMModeNetwork*)chatGetAccount:(uint64_t)to type:(int16_t)type callback:(NetWorkCallback)callback {
     kAccount.chatState = 0;
     if(kAccount.myAccount>0 && kAccount.toAccount>0){
         if(kAccount.chatType & P2P_CHAT_TYPE_MASK_VIDEO ||
@@ -151,20 +152,21 @@
     CmdC2SHole req = {0};
     req.account = htonll_x(kAccount.myAccount);
     req.toAccount = htonll_x(kAccount.toAccount);
-    memcpy(req.localIp, [kAccount.myLocalIp UTF8String], strlen([kAccount.myLocalIp UTF8String]));
+    if(kAccount.myLocalIp)
+        memcpy(req.localIp, [kAccount.myLocalIp UTF8String], strlen([kAccount.myLocalIp UTF8String]));
+    else
+        NSLog(@"未获取到本地iP");
     req.localPort = htons_x(kAccount.myLocalPort);
     
     media.dataParam = [NSData dataWithBytes:&req length:sizeof(CmdC2SHole)];
     
-    [self addTask:media callback:callback];
-    
-    return media;
+    return [self addTask:media callback:callback];
 }
 
 #pragma mark - C2C
 
 /// 打洞
-+ (PYIMModeMedia*)chatC2CHole:(NetWorkCallback)callback {
++ (PYIMModeNetwork*)chatC2CHole:(NetWorkCallback)callback {
     CmdHole body = {0};
     body.account = htonll_x(kAccount.myAccount);
     body.toAccount = htonll_x(kAccount.toAccount);
@@ -173,14 +175,13 @@
     media.cmdID = C2C_HOLE;
     
     media.dataParam = [NSData dataWithBytes:&body length:sizeof(CmdHole)];
-    [self addTask:media callback:callback];
     
     NSLog(@"c2cInnerHole|myAccount:%lld, myIp:%@, myPort:%u, toAccount:%lld, toIp:%@, toPort:%u", kAccount.myAccount, kAccount.myIp, kAccount.myPort, kAccount.toAccount, kAccount.toIp, kAccount.toPort);
-    return media;
+    return [self addTask:media callback:callback];
 }
 
 // 客户端打洞回复
-+ (PYIMModeMedia*)chatC2CHoleResp:(NSString*)ip port:(uint16_t)port callback:(NetWorkCallback)callback {
++ (PYIMModeNetwork*)chatC2CHoleResp:(NSString*)ip port:(uint16_t)port callback:(NetWorkCallback)callback {
     CmdHoleRsp body = {0};
     body.account = htonll_x(kAccount.myAccount);
     body.toAccount = htonll_x(kAccount.toAccount);
@@ -191,15 +192,14 @@
     media.rspPort = port;
     
     media.dataParam = [NSData dataWithBytes:&body length:sizeof(CmdHoleRsp)];
-    [self addTask:media callback:callback];
     
     NSLog(@"onC2CHoleRsp|fromip:%@, fromport:%u|myAccount:%lld, toAccount:%lld, myIp:%@, myPort:%u, myLocalIp:%@, myLocalPort:%u, toIp:%@, toPort:%u, toLocalIp:%@, toLocalPort:%u|p2p succ", ip, port, kAccount.myAccount, kAccount.toAccount, kAccount.myIp, kAccount.myPort, kAccount.myLocalIp, kAccount.myLocalPort, kAccount.toIp, kAccount.toPort, kAccount.toLocalIp, kAccount.toLocalPort);
     
-    return media;
+    return [self addTask:media callback:callback];
 }
 
 // 发起请求连接
-+ (PYIMModeMedia*)chatC2CRequest:(NetWorkCallback)callback {
++ (PYIMModeNetwork*)chatC2CRequest:(NetWorkCallback)callback {
     if (kAccount.myAccount == 0 || kAccount.toAccount == 0)
     {
         NSLog(@"c2cInnerRequest|invalid myAccount:%lld, toAccount:%lld", kAccount.myAccount, kAccount.toAccount);
@@ -216,15 +216,13 @@
     media.cmdID = C2C_REQUEST;
     
     media.dataParam = [NSData dataWithBytes:&body length:sizeof(CmdRequest)];
-    [self addTask:media callback:callback];
     
     NSLog(@"c2cInnerRequest|toip:%@, toport:%u|myAccount:%lld, myIp:%@, myPort:%u, myLocalIp%@, myLocalPort:%u, toAccount:%lld, toIp:%@, toPort:%u, toLocalIp:%@, toLocalPort:%u", kAccount.srvIp, kAccount.srvPort, kAccount.myAccount, kAccount.myIp, kAccount.myPort, kAccount.myLocalIp, kAccount.myLocalPort, kAccount.toAccount, kAccount.toIp, kAccount.toPort, kAccount.toLocalIp, kAccount.toLocalPort);
-    
-    return media;
+    return [self addTask:media callback:callback];
 }
 
 /// 接受请求操作
-+ (PYIMModeMedia*)chatC2CRequestAccept:(BOOL)accept callback:(NetWorkCallback)callback {
++ (PYIMModeNetwork*)chatC2CRequestAccept:(BOOL)accept callback:(NetWorkCallback)callback {
     if (kAccount.myAccount == 0 || kAccount.toAccount == 0)
     {
         if(callback)
@@ -287,15 +285,13 @@
     PYIMModeMedia *media = [[PYIMModeMedia alloc] init];
     media.cmdID = C2C_REQUEST_RSP;
     media.dataParam = [NSData dataWithBytes:&body length:sizeof(CmdRequestRsp)];
-    [self addTask:media callback:callback];
-    
     
     NSLog(@"c2cAccept|toip:%@, toport:%u|accept:%d,type:%d,myAccount:%lld, myIp:%@, myPort:%u, myLocalIp%@, myLocalPort:%u, toAccount:%lld, toIp:%@, toPort:%u, toLocalIp:%@, toLocalPort:%u", kAccount.srvIp, kAccount.srvPort, accept?0x0:0x01, type, kAccount.myAccount, kAccount.myIp, kAccount.myPort, kAccount.myLocalIp, kAccount.myLocalPort, kAccount.toAccount, kAccount.toIp, kAccount.toPort, kAccount.toLocalIp, kAccount.toLocalPort);
-    return media;
+    return [self addTask:media callback:callback];
 }
 
 /// 请求更多操作；取消、关闭、暂停、继续、切换、
-+ (PYIMModeMedia*)chatC2CRequestOpr:(uint16_t)cmd callback:(NetWorkCallback)callback {
++ (PYIMModeNetwork*)chatC2CRequestOpr:(uint16_t)cmd callback:(NetWorkCallback)callback {
     if (kAccount.myAccount == 0 || kAccount.toAccount == 0){
         if(callback)
             callback([[PYIMError alloc] initWithCmd:cmd status:C2S_ERR_NOTLOGIN]);
@@ -366,14 +362,13 @@
         media.dataParam = [NSData dataWithBytes:&req length:sizeof(CmdSwitch)];
     }
     
-    [self addTask:media callback:callback];
-    return media;
+    return [self addTask:media callback:callback];
 }
 
 static int64_t g_frameID = 0;
 
 // 发送视频音频
-+ (PYIMModeMedia*)chatC2CSendMedia:(PYIMModeAudio*)media callback:(NetWorkCallback)callback {
++ (PYIMModeNetwork*)chatC2CSendMedia:(PYIMModeAudio*)media callback:(NetWorkCallback)callback {
     if(kAccount.chatSave==0){
         if(callback)callback([[PYIMError alloc] initWithCmd:C2C_AUDIO_FRAME errDesc:@"还未开始聊天"]);
         return nil;
@@ -390,6 +385,7 @@ static int64_t g_frameID = 0;
             if([kAccount.myIp isEqualToString:kAccount.toIp]){
                 return [self chatC2CSendVideoEx:(PYIMModeVideo*)media callback:callback];
             }else {
+                // p2p分包处理？
                 PYIMModeVideo *mode = (PYIMModeVideo*)media;
                 
                 PYIMModeMedia *mediax = [[PYIMModeMedia alloc] init];
@@ -421,7 +417,7 @@ static int64_t g_frameID = 0;
                     }
                     
                     PYIMModeVideo *video = [[PYIMModeVideo alloc] init];
-                    video.media = [sendData subdataWithRange:NSMakeRange(send_pos, send_len)];
+                    video.media = [NSData dataWithBytes:send_buf length:send_len];
                     video.mirror = mode.mirror;
                     video.angle = mode.angle;
                     video.width = mode.width;
@@ -455,7 +451,7 @@ static int64_t g_frameID = 0;
 }
 
 /// api中将消息进行封装成网络任务
-+ (PYIMModeMedia*)chatC2CSendAudio:(PYIMModeAudio*)data callback:(NetWorkCallback)callback {
++ (PYIMModeNetwork*)chatC2CSendAudio:(PYIMModeAudio*)data callback:(NetWorkCallback)callback {
     PYIMModeMedia *media = [[PYIMModeMedia alloc] init];
     media.mode = data; /// 已经处理好了
     media.cmdID = C2C_AUDIO_FRAME;
@@ -467,12 +463,11 @@ static int64_t g_frameID = 0;
 //    body.timeEnd = htonll_x(data.timeRecordEnd);
     media.dataParam = [NSData dataWithBytes:&body length:sizeof(CmdAudioFrame)];
     
-    [self addTask:media callback:callback];
-    return media;
+    return [self addTask:media callback:callback];
 }
 
 // 视频发送
-+ (PYIMModeMedia*)chatC2CSendVideo:(PYIMModeVideo*)video callback:(NetWorkCallback)callback {
++ (PYIMModeNetwork*)chatC2CSendVideo:(PYIMModeVideo*)video callback:(NetWorkCallback)callback {
     CmdVideoFrame body = {0};
     body.account = htonll_x(kAccount.myAccount);
     body.toAccount = htonll_x(kAccount.toAccount);
@@ -491,16 +486,15 @@ static int64_t g_frameID = 0;
 //    body.timeEnd = htonll_x(video.timeRecordEnd);
     
     PYIMModeMedia *media = [[PYIMModeMedia alloc] init];
-    media.dataMedia = video.media; /// 已经处理好了
+    media.mode = video; /// 已经处理好了
     media.cmdID = C2C_VIDEO_FRAME;
     media.dataParam = [NSData dataWithBytes:&body length:sizeof(CmdVideoFrame)];
     
-    [self addTask:media callback:callback];
-    return media;
+    return [self addTask:media callback:callback];
 }
 
 // 视频发送Ex
-+ (PYIMModeMedia*)chatC2CSendVideoEx:(PYIMModeVideo*)video callback:(NetWorkCallback)callback {
++ (PYIMModeNetwork*)chatC2CSendVideoEx:(PYIMModeVideo*)video callback:(NetWorkCallback)callback {
     CmdVideoFrameEx body = {0};
     body.account = htonll_x(kAccount.myAccount);
     body.toAccount = htonll_x(kAccount.toAccount);
@@ -518,8 +512,7 @@ static int64_t g_frameID = 0;
     media.cmdID = C2C_VIDEO_FRAME_EX;
     media.dataParam = [NSData dataWithBytes:&body length:sizeof(CmdVideoFrameEx)];
     
-    [self addTask:media callback:callback];
-    return media;
+    return [self addTask:media callback:callback];
 }
 
 @end
