@@ -34,6 +34,8 @@
 		257780C720940F8600B43AFD /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 257780C620940F8600B43AFD /* VideoToolbox.framework */; };
 		257780C920940F8D00B43AFD /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 257780C820940F8D00B43AFD /* CoreTelephony.framework */; };
 		257D30912093222E001303D9 /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = 257D30902093222E001303D9 /* Podfile */; };
+		25A3E87920BFC64F0067DE56 /* GPUImageBeautifyFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = 25A3E87820BFC64F0067DE56 /* GPUImageBeautifyFilter.m */; };
+		25A3E87B20BFD5FE0067DE56 /* CoreImage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 25A3E87A20BFD5FD0067DE56 /* CoreImage.framework */; };
 		25C118D720B3EC410034E2F8 /* libavcodec.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 25C118BE20B3EC410034E2F8 /* libavcodec.a */; };
 		25C118D820B3EC410034E2F8 /* libavdevice.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 25C118BF20B3EC410034E2F8 /* libavdevice.a */; };
 		25C118D920B3EC410034E2F8 /* libavfilter.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 25C118C020B3EC410034E2F8 /* libavfilter.a */; };
@@ -109,6 +111,9 @@
 		257780C620940F8600B43AFD /* VideoToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = VideoToolbox.framework; path = System/Library/Frameworks/VideoToolbox.framework; sourceTree = SDKROOT; };
 		257780C820940F8D00B43AFD /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = System/Library/Frameworks/CoreTelephony.framework; sourceTree = SDKROOT; };
 		257D30902093222E001303D9 /* Podfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Podfile; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		25A3E87720BFC64F0067DE56 /* GPUImageBeautifyFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GPUImageBeautifyFilter.h; sourceTree = "<group>"; };
+		25A3E87820BFC64F0067DE56 /* GPUImageBeautifyFilter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GPUImageBeautifyFilter.m; sourceTree = "<group>"; };
+		25A3E87A20BFD5FD0067DE56 /* CoreImage.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreImage.framework; path = System/Library/Frameworks/CoreImage.framework; sourceTree = SDKROOT; };
 		25C1185220B3E9B70034E2F8 /* PYConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PYConfig.h; sourceTree = "<group>"; };
 		25C1185720B3EC410034E2F8 /* avcodec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = avcodec.h; sourceTree = "<group>"; };
 		25C1185820B3EC410034E2F8 /* avfft.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = avfft.h; sourceTree = "<group>"; };
@@ -267,6 +272,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				25A3E87B20BFD5FE0067DE56 /* CoreImage.framework in Frameworks */,
 				2557C09420B55C7B00205363 /* libiconv.tbd in Frameworks */,
 				2557C09220B55C7200205363 /* libz.tbd in Frameworks */,
 				2557C09020B55C6B00205363 /* libbz2.tbd in Frameworks */,
@@ -324,6 +330,15 @@
 				256930BD20AACD850002B477 /* PYIMModeAudio.m */,
 			);
 			path = Classes;
+			sourceTree = "<group>";
+		};
+		25A3E87620BFC64F0067DE56 /* GPUImageBeautifyFilter */ = {
+			isa = PBXGroup;
+			children = (
+				25A3E87720BFC64F0067DE56 /* GPUImageBeautifyFilter.h */,
+				25A3E87820BFC64F0067DE56 /* GPUImageBeautifyFilter.m */,
+			);
+			path = GPUImageBeautifyFilter;
 			sourceTree = "<group>";
 		};
 		25C1185320B3EC410034E2F8 /* OpenGL */ = {
@@ -564,6 +579,7 @@
 		25CBE45220B26F9900CE51A7 /* Helper */ = {
 			isa = PBXGroup;
 			children = (
+				25A3E87620BFC64F0067DE56 /* GPUImageBeautifyFilter */,
 				25C1185320B3EC410034E2F8 /* OpenGL */,
 				25CBE45320B26F9900CE51A7 /* Category */,
 				25CBE46220B26F9900CE51A7 /* NetworkCheck */,
@@ -682,6 +698,7 @@
 		C31BBF15208F052000E72B16 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				25A3E87A20BFD5FD0067DE56 /* CoreImage.framework */,
 				2557C09320B55C7B00205363 /* libiconv.tbd */,
 				2557C09120B55C7200205363 /* libz.tbd */,
 				2557C08F20B55C6B00205363 /* libbz2.tbd */,
@@ -782,10 +799,20 @@
 			);
 			inputPaths = (
 				"${SRCROOT}/Pods/Target Support Files/Pods-PYIMAV/Pods-PYIMAV-resources.sh",
+				"${PODS_ROOT}/GPUImage/framework/Resources/lookup.png",
+				"${PODS_ROOT}/GPUImage/framework/Resources/lookup_amatorka.png",
+				"${PODS_ROOT}/GPUImage/framework/Resources/lookup_miss_etikate.png",
+				"${PODS_ROOT}/GPUImage/framework/Resources/lookup_soft_elegance_1.png",
+				"${PODS_ROOT}/GPUImage/framework/Resources/lookup_soft_elegance_2.png",
 				"${PODS_ROOT}/SVProgressHUD/SVProgressHUD/SVProgressHUD.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/lookup.png",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/lookup_amatorka.png",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/lookup_miss_etikate.png",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/lookup_soft_elegance_1.png",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/lookup_soft_elegance_2.png",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SVProgressHUD.bundle",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -822,6 +849,7 @@
 				2558F4712091B57F00F52DF8 /* PYIMNetworkManager.m in Sources */,
 				252FDF0020ABC7580018C685 /* PYIMVideoController.m in Sources */,
 				25CBE47C20B26F9900CE51A7 /* PYNoteManager.m in Sources */,
+				25A3E87920BFC64F0067DE56 /* GPUImageBeautifyFilter.m in Sources */,
 				C31A7A8D208DC63A000FE9B3 /* ViewController.m in Sources */,
 				25CBE47D20B26F9900CE51A7 /* adpcm.c in Sources */,
 				C31A7A98208DC63A000FE9B3 /* main.m in Sources */,

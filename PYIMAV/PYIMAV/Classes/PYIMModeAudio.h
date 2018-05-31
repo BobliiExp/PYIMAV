@@ -34,6 +34,7 @@ typedef NS_ENUM(NSInteger, PYIMMediaState) {
 @property (nonatomic, assign) int angle;
 @property (nonatomic, assign) int mirror; // front camera = 1
 @property (nonatomic, assign) int bitrate;
+@property (nonatomic, assign) int client; ///< 客户单类型
 
 @property (nonatomic, assign) uint16_t frameLen;//帧长度
 @property (nonatomic, assign) uint16_t packs;//帧的包数

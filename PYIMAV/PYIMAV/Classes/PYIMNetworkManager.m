@@ -864,7 +864,8 @@ adpcm_state decode_state;
             if(self.sType!=EServer_Login)
                 task.callback = nil; // 只有登录服务器需要返回，其他如果失败会在登录服务器成功后，重新尝试（登录过程除非主动退出登录，否则一直会尝试登录）
             
-            [self addTaskToQueue:opr];
+            if(self.sType==EServer_Login)
+                [self addTaskToQueue:opr]; // 只有登录服务器登录后才尝试登录其他服务器；登录服务器登录后会通过心跳触发其他服务器登录
         }else{
             [task finishedWithCode:C2S_ERR_NOTLOGIN];
             

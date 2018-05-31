@@ -19,6 +19,7 @@ PODS:
   - FMDB (2.7.2):
     - FMDB/standard (= 2.7.2)
   - FMDB/standard (2.7.2)
+  - GPUImage (0.1.7)
   - libextobjc (0.4.1):
     - libextobjc/EXTADT (= 0.4.1)
     - libextobjc/EXTConcreteProtocol (= 0.4.1)
@@ -65,6 +66,7 @@ DEPENDENCIES:
   - CocoaAsyncSocket
   - FBRetainCycleDetector
   - FMDB
+  - GPUImage (~> 0.1.7)
   - libextobjc
   - MBProgressHUD
   - MLeaksFinder
@@ -77,6 +79,7 @@ SPEC REPOS:
     - CocoaAsyncSocket
     - FBRetainCycleDetector
     - FMDB
+    - GPUImage
     - libextobjc
     - MBProgressHUD
     - MLeaksFinder
@@ -88,12 +91,13 @@ SPEC CHECKSUMS:
   CocoaAsyncSocket: eafaa68a7e0ec99ead0a7b35015e0bf25d2c8987
   FBRetainCycleDetector: 46f8179bbb1c587deee3ea838a1a3ee02acf5015
   FMDB: 6198a90e7b6900cfc046e6bc0ef6ebb7be9236aa
+  GPUImage: 733a5f0fab92df9de1c37ba9df520a833ccb406d
   libextobjc: a650fc1bf489a3d3a9bc2e621efa3e1006fc5471
   MBProgressHUD: e7baa36a220447d8aeb12769bf0585582f3866d9
   MLeaksFinder: 8c435bd2f6d070af18cff082b503b21adc130fc0
   RSSwizzle: d561958f595028bfcef98c7d55c318b3878a61c6
   SVProgressHUD: 1428aafac632c1f86f62aa4243ec12008d7a51d6
 
-PODFILE CHECKSUM: 3200b3305a133f4d48ed9f13f1d3d4e205bd5ac6
+PODFILE CHECKSUM: 8dd9b274f8b71707e1020d68aef096d84301a76f
 
 COCOAPODS: 1.5.0

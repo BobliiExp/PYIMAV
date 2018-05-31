@@ -90,6 +90,7 @@
             self.bitrate = rsp.bitrate*1000;
 //            self.angle = rsp.angle;
             self.mirror = rsp.mirror;
+            self.client = rsp.client;
             self.angle = rsp.client == Client_Android ? -rsp.angle : rsp.angle;
             
             //            self.timeRecordStart = rsp.timeStart;
@@ -124,7 +125,7 @@
             self.fps = rsp.fps;
             self.bitrate = rsp.bitrate*1000;
 //            self.angle = rsp.angle;
-            
+            self.client = rsp.client;
             self.angle = rsp.client == Client_Android ? -rsp.angle : rsp.angle;
 //            [self convertAngle:rsp.angle client:header.Client];
             self.mirror = rsp.mirror;

@@ -311,6 +311,99 @@ static size_t g_video_buffer_length;
     return video;
 }
 
++ (PYIMModeVideo*)convertSampleEx:(CVPixelBufferRef)imageBuffer {
+    PYIMModeVideo *video = [[PYIMModeVideo alloc] init];
+    
+    @autoreleasepool{
+        CVPixelBufferLockBaseAddress(imageBuffer, 0);
+        
+        //    UInt8 *bufferbasePtr = (UInt8 *)CVPixelBufferGetBaseAddress(imageBuffer);
+        UInt8 *bufferPtr = (UInt8 *)CVPixelBufferGetBaseAddressOfPlane(imageBuffer,0);
+        UInt8 *bufferPtr1 = (UInt8 *)CVPixelBufferGetBaseAddressOfPlane(imageBuffer,1);
+        
+        //    size_t buffeSize = CVPixelBufferGetDataSize(imageBuffer);
+        size_t width = CVPixelBufferGetWidth(imageBuffer);
+        size_t height = CVPixelBufferGetHeight(imageBuffer);
+        
+        //    size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
+        size_t bytesrow0 = CVPixelBufferGetBytesPerRowOfPlane(imageBuffer,0);
+        size_t bytesrow1  = CVPixelBufferGetBytesPerRowOfPlane(imageBuffer,1);
+        //    size_t bytesrow2 = CVPixelBufferGetBytesPerRowOfPlane(imageBuffer,2);
+        
+        size_t video_size = width * height *3/2;
+        UInt8 *yuv420_data = (UInt8 *)malloc(video_size);//buffer to store YUV with layout YYYYYYYYUUVV
+        
+        
+        /* convert NV12 data to YUV420*/
+        UInt8 *pY = bufferPtr ;
+        UInt8 *pUV = bufferPtr1;
+        UInt8 *pU = yuv420_data + width * height;
+        UInt8 *pV = pU + width * height / 4;
+        for(int i = 0; i < height; i++)
+        {
+            memcpy(yuv420_data + i * width, pY + i * bytesrow0, width);
+        }
+        for(int j = 0;j < height/2; j++)
+        {
+            for(int i = 0; i < width/2; i++)
+            {
+                *(pU++) = pUV[i<<1];
+                *(pV++) = pUV[(i<<1) + 1];
+            }
+            pUV += bytesrow1;
+        }
+        
+        CVPixelBufferUnlockBaseAddress(imageBuffer, 0);
+        
+        size_t out_width = width;
+        size_t out_height = height;
+        size_t out_size = video_size;
+        int ret = 0;
+        
+        if ((int)(width * height) > (int)(ENCODE_FRMAE_WIDTH * ENCODE_FRMAE_HEIGHT)) {
+            if (!g_vedio_buffer){
+                g_vedio_buffer = (uint8_t *)malloc(video_size);
+                g_video_buffer_length = video_size;
+            }
+            
+            if(g_video_buffer_length<video_size){
+                realloc(g_vedio_buffer, video_size);
+                g_video_buffer_length = video_size;
+            }
+            
+            float x = ((float)width)/ENCODE_FRMAE_WIDTH;
+            float y = ((float)height)/ENCODE_FRMAE_HEIGHT;
+            if (x >= y)
+            {
+                out_width = ENCODE_FRMAE_WIDTH;
+                out_height = (int)(((float)height)/x);
+            }
+            else
+            {
+                out_height = ENCODE_FRMAE_HEIGHT;
+                out_width = (int)(((float)width)/y);
+            }
+            
+            out_size = out_width*out_height*3/2;
+            bzero(g_vedio_buffer, video_size);
+            
+            ret = resize_frame(yuv420_data, (int)width, (int)height, g_vedio_buffer, (int)out_width, (int)out_height);
+            video.media = [NSData dataWithBytes:g_vedio_buffer length:out_size];
+        } else {
+            video.media = [NSData dataWithBytes:yuv420_data length:out_size];
+        }
+        
+        if(ret==0){
+            video.width = (int)out_width;
+            video.height = (int)out_height;
+        }
+        
+        free(yuv420_data);
+    }
+    
+    return video;
+}
+
 - (NSData*)encode:(PYIMModeVideo*)video {
     // 整合编码数据
     NSMutableData *mData = nil;

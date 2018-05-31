@@ -14,6 +14,8 @@ pod 'AFNetworking'
 pod 'FMDB'
 pod 'RSSwizzle'
 
+pod 'GPUImage', '~> 0.1.7'  # 视频美化
+
 #pod ‘Bugly’
 
 #pod 'GoogleWebRTC'

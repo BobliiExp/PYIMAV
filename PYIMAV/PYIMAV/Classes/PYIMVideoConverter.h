@@ -23,6 +23,7 @@
 
 /// 采集 - 将录制的sample转换为NSData，其中会进行PUV转换处理
 + (PYIMModeVideo*)convertSample:(CMSampleBufferRef)sample;
++ (PYIMModeVideo*)convertSampleEx:(CVPixelBufferRef)imageBuffer;
 
 /// 编码 -  编码视频数据(convertSample)，默认采用x264算法
 - (NSData*)encode:(PYIMModeVideo*)video;
