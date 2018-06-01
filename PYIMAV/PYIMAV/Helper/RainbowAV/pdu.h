@@ -26,15 +26,6 @@ extern "C" {
 // �ṹ����
 #pragma pack(1)
     
-    
-enum ClientType {
-    Client_None = 0,
-    Client_Android,
-    Client_iOS,
-    Client_WP,
-    Client_Web
-};
-    
 typedef struct {
     uint16_t TotalLen;
     uint16_t CmdId;

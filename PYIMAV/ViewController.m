@@ -202,6 +202,7 @@
     PYVCChatVideo *video = [[PYVCChatVideo alloc] init];
     video.isLocal = self.switchTest.isOn;
     video.isCompress = !self.switchCompress.isOn;
+    video.is8kTo8k = self.switchRate.isOn;
     video.toAccount = [self.txtFieldTo.text intValue];
     [self presentViewController:video animated:YES completion:NULL];
 }
@@ -262,6 +263,7 @@
         PYVCChatVideo *video = [[PYVCChatVideo alloc] init];
         video.isRequest = YES;
         video.isCompress = YES;
+        video.is8kTo8k = self.switchRate.isOn;
         [self presentViewController:video animated:YES completion:NULL];
     }
 }

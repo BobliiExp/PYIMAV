@@ -15,6 +15,7 @@ pod 'FMDB'
 pod 'RSSwizzle'
 
 pod 'GPUImage', '~> 0.1.7'  # 视频美化
+pod 'YUCIHighPassSkinSmoothing'
 
 #pod ‘Bugly’
 

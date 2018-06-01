@@ -580,6 +580,11 @@ static size_t g_video_buffer_length;
     }
 }
 
+- (void)dealloc {
+    NSLog(@"dealloc %@", self);
+    [self dispose];
+}
+
 struct SwsContext *img_convert_ctx = NULL;
 int resize_frame(unsigned char *in, unsigned int width, unsigned int height, unsigned char *out, unsigned int out_width, unsigned int out_height)
 {

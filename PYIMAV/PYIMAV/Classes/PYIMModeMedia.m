@@ -1284,7 +1284,7 @@ static NSInteger kTimeout = 10; // 秒
     NSData *data = nil;
     if([self.mode isMemberOfClass:[PYIMModeVideo class]]){
         // 视频数据
-        data = [(PYIMVideoConverter*)converter encode:self.mode];
+        data = [(PYIMVideoConverter*)converter encode:(PYIMModeVideo*)self.mode];
         
     }else if([self.mode isMemberOfClass:[PYIMModeAudio class]]){
         // 语音数据

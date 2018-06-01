@@ -31,7 +31,7 @@
         if(ret == 0){
             
             self.media = [(PYIMAudioConverter*)converter decodeAudio:[NSData dataWithBytes:swapBuf length:swapLen]];
-            
+//            self.client = rsp.c
 //            char decBuffer[AUDIO_BUFFER];
 //            int lenDec = [(PYIMAudioConverter*)converter decodeAudioEx:(char*)swapBuf outBuffer:decBuffer];
 //            self.media = [NSData dataWithBytes:decBuffer length:lenDec];
@@ -50,6 +50,7 @@
     mode.is8kTo8k = _is8kTo8k;
     mode.timeRecordStart = _timeRecordStart;
     mode.timeRecordEnd = _timeRecordEnd;
+    mode.client = _client;
     
     return mode;
 }
@@ -90,14 +91,14 @@
             self.bitrate = rsp.bitrate*1000;
 //            self.angle = rsp.angle;
             self.mirror = rsp.mirror;
-            self.client = rsp.client;
+            self.client = (PYClientType)rsp.client;
             self.angle = rsp.client == Client_Android ? -rsp.angle : rsp.angle;
             
             //            self.timeRecordStart = rsp.timeStart;
             //            self.timeRecordEnd = rsp.timeEnd;
             
             if(rsp.packs==1){
-                self.media = [self.converter decode:swapBuf length:swapLen video:self];
+                self.media = [self.converter decode:(char*)swapBuf length:swapLen video:self];
             }else {
                 self.media = [NSData dataWithBytes:swapBuf length:swapLen];
             }

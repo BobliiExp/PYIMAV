@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "PYConfig.h"
 
 typedef NS_ENUM(NSInteger, PYIMMediaState) {
     EMediaState_Stoped,     ///< 未开启（未初始化相关设置）
@@ -20,6 +21,7 @@ typedef NS_ENUM(NSInteger, PYIMMediaState) {
 @property (nonatomic, assign) BOOL is8kTo8k;    ///< 是否8k录制
 @property (nonatomic, assign) int64_t timeRecordEnd; ///< 录制完成时间
 @property (nonatomic, assign) int64_t timeRecordStart; ///< 录制开始时间，第一个包是连接成功时间，后面的包就是上一个包的录制完成时间
+@property (nonatomic, assign) PYClientType client; ///< 客户端类型
 
 - (instancetype)initWithData:(NSData*)data converter:(id)converter;
 
@@ -34,7 +36,6 @@ typedef NS_ENUM(NSInteger, PYIMMediaState) {
 @property (nonatomic, assign) int angle;
 @property (nonatomic, assign) int mirror; // front camera = 1
 @property (nonatomic, assign) int bitrate;
-@property (nonatomic, assign) int client; ///< 客户单类型
 
 @property (nonatomic, assign) uint16_t frameLen;//帧长度
 @property (nonatomic, assign) uint16_t packs;//帧的包数

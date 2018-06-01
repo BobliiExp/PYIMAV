@@ -19,6 +19,10 @@
 
 #import <CoreImage/CoreImage.h>
 
+#import <YUCIHighPassSkinSmoothing.h>
+
+#import "DotEnginePixelBuffer.h"
+
 void cleanSelf(id self, SEL _cmd){
     NSLog(@"貌似您没有实现cleanSelf方法，这里是动态添加的处理逻辑");
 }
@@ -38,7 +42,7 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
  **.创建播放子线程，并且开启runloop，控制循环播放流程
  
  */
-@interface PYIMVideoController() <AVCaptureVideoDataOutputSampleBufferDelegate, GPUImageVideoCameraDelegate> {
+@interface PYIMVideoController() <AVCaptureVideoDataOutputSampleBufferDelegate> {
     dispatch_queue_t queueOutput;
     
     AVCaptureSession *session;
@@ -101,20 +105,24 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
         
         _viewfront = viewfront;
         queueRec = [[PYIMQueue alloc] initWithCapcity:5];
+        
         // 原始采集
-         queueOutput = dispatch_queue_create("PYIMVideoController", DISPATCH_QUEUE_SERIAL); // 串行，逐个获取
-         queuePlayer = dispatch_queue_create("videoplay", DISPATCH_QUEUE_CONCURRENT); // 控制视频播放的queue，顺序播放，采用semaphore控制
-         cameraFront = YES;
-         [self setupCaptureSession];
-         [self setupCamera];
-         [session startRunning];
+        queueOutput = dispatch_queue_create("PYIMVideoController", DISPATCH_QUEUE_SERIAL); // 串行，逐个获取
+        queuePlayer = dispatch_queue_create("videoplay", DISPATCH_QUEUE_CONCURRENT); // 控制视频播放的queue，顺序播放，采用semaphore控制
+        cameraFront = YES;
+        [self setupCaptureSession];
+        [self setupCamera];
+        [session startRunning];
+        coreImageContext = [CIContext contextWithOptions:nil];
+        // end
         
+        // GPUImage 采集
+        //        [self setupGPUCapture];
+        //        EAGLContext *glContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+        //        GLKView *glView = [[GLKView alloc] initWithFrame:CGRectMake(0.0, 0.0, 360.0, 480.0) context:glContext];
+        //        coreImageContext = [CIContext contextWithEAGLContext:glView.context];
+        // end
         
-//        [self setupGPUCapture];
-        
-        EAGLContext *glContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
-        GLKView *glView = [[GLKView alloc] initWithFrame:CGRectMake(0.0, 0.0, 360.0, 480.0) context:glContext];
-        coreImageContext = [CIContext contextWithEAGLContext:glView.context];
     }
     
     return self;
@@ -139,10 +147,13 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
     // 创建输出配置
     output = [[AVCaptureVideoDataOutput alloc] init];
     NSString* key = (NSString*)kCVPixelBufferPixelFormatTypeKey;
-    NSNumber* val = [NSNumber numberWithUnsignedInt:kCVPixelFormatType_420YpCbCr8BiPlanarFullRange];
+    
+    // Since we will use CIImage and CIFilter to apply filter to video output, we need to change the output format to kCVPixelFormatType_32BGRA which can be used by CIImage.
+    NSNumber* val = [NSNumber numberWithUnsignedInt:_isFilter?kCVPixelFormatType_32BGRA:kCVPixelFormatType_420YpCbCr8BiPlanarFullRange]; //kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
     NSDictionary* videoSettings = [NSDictionary dictionaryWithObject:val forKey:key];
     output.videoSettings = videoSettings;
     [output setSampleBufferDelegate:self queue:queueOutput];
+    output.alwaysDiscardsLateVideoFrames = YES;
     
     // 关联输出与展示
     connection = [output connectionWithMediaType:AVMediaTypeVideo];
@@ -232,8 +243,12 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
         self.playEnd(state);
 }
 
+- (void)dealloc {
+    NSLog(@"dealloc %@", self);
+    [self stop];
+}
 #pragma mark - GPUImage
-
+/// deprecated 因为这里通过RGBA 转到 YUV后会导致图像色彩变化，具体原因未细究
 - (void)setupGPUCapture {
     // 创建视频源
     // SessionPreset:屏幕分辨率，AVCaptureSessionPresetHigh会自适应高分辨率
@@ -243,12 +258,7 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
     videoCamera.outputImageOrientation = UIInterfaceOrientationPortrait;
     gpuCamera = videoCamera;
     
-    videoCamera.delegate = self;
-    
-    NSString* key = (NSString*)kCVPixelBufferPixelFormatTypeKey;
-    NSNumber* val = [NSNumber numberWithUnsignedInt:kCVPixelFormatType_420YpCbCr8BiPlanarFullRange];
-    NSDictionary* videoSettings = [NSDictionary dictionaryWithObject:val forKey:key];
-    ((AVCaptureVideoDataOutput*)gpuCamera.captureSession.outputs.firstObject).videoSettings = videoSettings;
+    //    videoCamera.delegate = self; // 设置委托回调的sample就是采集的原始帧数据
     
     // 创建最终预览View
     GPUImageView *captureVideoPreview = [[GPUImageView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
@@ -269,7 +279,7 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
     [videoCamera addTarget:beautifyFilter];
     [beautifyFilter addTarget:captureVideoPreview];
     
-   /* CGSize outputSize = {640, 480};
+    CGSize outputSize = {ENCODE_FRMAE_WIDTH, ENCODE_FRMAE_HEIGHT}; //基于GPUImage输出的视频流格式为RGBA，我这边需要对接Android格式YUV，所以要么转换，要么就只能从原始Sample输出进行filter处理
     GPUImageRawDataOutput *rawDataOutput = [[GPUImageRawDataOutput alloc] initWithImageSize:CGSizeMake(outputSize.width, outputSize.height) resultsInBGRAFormat:NO];
     [beautifyFilter addTarget:rawDataOutput];
     
@@ -285,28 +295,18 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
             GLubyte *outputBytes = [strongOutput rawBytesForImage];
             NSInteger bytesPerRow = [strongOutput bytesPerRowInOutput];
             CVPixelBufferRef pixelBuffer = NULL;
-            CVPixelBufferCreateWithBytes(kCFAllocatorDefault, outputSize.width, outputSize.height, kCVPixelFormatType_420YpCbCr8BiPlanarFullRange, outputBytes, bytesPerRow, nil, nil, nil, &pixelBuffer);
+            CVPixelBufferCreateWithBytes(kCFAllocatorDefault, outputSize.width, outputSize.height, kCVPixelFormatType_32BGRA /*这里直接填写kCVPixelFormatType_420YpCbCr8BiPlanarFullRange得不到UV数据*/, outputBytes, bytesPerRow, nil, nil, nil, &pixelBuffer);
             
-            
-            CMVideoFormatDescriptionRef videoInfo = NULL;
-            CMVideoFormatDescriptionCreateForImageBuffer(NULL, pixelBuffer, &videoInfo);
-            
-            //         CMSampleTimingInfo sampleTimimgInfo;
-            //         result = CMSampleBufferGetSampleTimingInfo(sampleBuffer, 0, &sampleTimimgInfo);
-            
-            CMSampleBufferRef sampleBuffer = NULL;
-            CMSampleTimingInfo sampleTimimgInfo;
-            CMSampleBufferCreateForImageBuffer(kCFAllocatorDefault, pixelBuffer, true, NULL, NULL, videoInfo, &sampleTimimgInfo, &sampleBuffer);
-
+            // RGBA to YUV
+            pixelBuffer = [DotEnginePixelBuffer convertPixelBuffer:pixelBuffer];
             
             // 之后可以利用VideoToolBox进行硬编码再结合rtmp协议传输视频流了
-//            [weakSelf actionCaptureOutEx:pixelBuffer];
-            [weakSelf actionCaptureOut:sampleBuffer];
+            [weakSelf actionCaptureOutEx:pixelBuffer];
             
             [strongOutput unlockFramebufferAfterReading];
             CFRelease(pixelBuffer);
         }
-    }];*/
+    }];
     
     // 调整摄像头采样率
     [self setupFPS];
@@ -314,114 +314,6 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
     // 必须调用startCameraCapture，底层才会把采集到的视频源，渲染到GPUImageView中，就能显示了。
     // 开始采集视频
     [videoCamera startCameraCapture];
-}
-
-- (void)willOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer {
-    if (!CMSampleBufferIsValid(sampleBuffer)) {
-        return;
-    }
-    CFAbsoluteTime t0 = CFAbsoluteTimeGetCurrent();
-    CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
-    
-    // 转换为CIImage
-    CIImage *ciImage = [CIImage imageWithCVPixelBuffer:pixelBuffer];
-    
-    // 创建滤镜
-    CIFilter *fiter = [CIFilter filterWithName:@"CIFaceBalance"];
-    
-    [fiter setValue:ciImage forKey:@"inputImage"];
-    [fiter setValue:@100 forKey:@"inputStrength"];
-    ciImage = fiter.outputImage;
-    
-    [coreImageContext render:ciImage toCVPixelBuffer:pixelBuffer];
-    CFAbsoluteTime t1 = CFAbsoluteTimeGetCurrent();
-    NSLog(@"dur to ciimage: %@", @(t1-t0));
-    
-    [self actionCaptureOutEx:pixelBuffer];
-    return;
-    
-    [self sampleFiltering:sampleBuffer];
-    
-    [self actionCaptureOut:sampleBuffer];
-}
-
-- (CVPixelBufferRef)CVPixelBufferRefFromUiImage:(UIImage *)img {
-    
-    CGSize size = img.size;
-    CGImageRef image = [img CGImage];
-    
-    NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys:
-                             [NSNumber numberWithBool:YES], kCVPixelBufferCGImageCompatibilityKey,
-                             [NSNumber numberWithBool:YES], kCVPixelBufferCGBitmapContextCompatibilityKey, nil];
-    CVPixelBufferRef pxbuffer = NULL;
-    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, size.width, size.height, kCVPixelFormatType_32ARGB, (__bridge CFDictionaryRef) options, &pxbuffer);
-    
-    NSParameterAssert(status == kCVReturnSuccess && pxbuffer != NULL);
-    
-    CVPixelBufferLockBaseAddress(pxbuffer, 0);
-    void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
-    NSParameterAssert(pxdata != NULL);
-    
-    CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef context = CGBitmapContextCreate(pxdata, size.width, size.height, 8, 4*size.width, rgbColorSpace, kCGImageAlphaPremultipliedFirst);
-    NSParameterAssert(context);
-    
-    CGContextDrawImage(context, CGRectMake(0, 0, CGImageGetWidth(image), CGImageGetHeight(image)), image);
-    
-    CGColorSpaceRelease(rgbColorSpace);
-    CGContextRelease(context);
-    
-    CVPixelBufferUnlockBaseAddress(pxbuffer, 0);
-    
-    return pxbuffer;
-}
-
-- (CMSampleBufferRef)sampleFiltering:(CMSampleBufferRef)sampleBuffer {
-    NSLog(@"start rotate");
-    CFAbsoluteTime t0 = CFAbsoluteTimeGetCurrent();
-    CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
-    CIImage *ciimage = [CIImage imageWithCVPixelBuffer:pixelBuffer];
-    CFAbsoluteTime t1 = CFAbsoluteTimeGetCurrent();
-    NSLog(@"dur to ciimage: %@", @(t1-t0));
-    
-    CVPixelBufferLockBaseAddress(pixelBuffer, 0);
-    CIImage *newImage = [ciimage imageByApplyingOrientation:kCGImagePropertyOrientationUp];
-    CFAbsoluteTime t2 = CFAbsoluteTimeGetCurrent();
-    NSLog(@"dur rotate ciimage: %@", @(t2-t1));
-    
-    CVPixelBufferRef newPixcelBuffer = nil;
-    size_t width                        = CVPixelBufferGetWidth(pixelBuffer);
-    size_t height                       = CVPixelBufferGetHeight(pixelBuffer);
-    
-    CVPixelBufferCreate(kCFAllocatorDefault, height, width, kCVPixelFormatType_32BGRA, nil, &newPixcelBuffer);
-    CFAbsoluteTime t3 = CFAbsoluteTimeGetCurrent();
-    NSLog(@"dur alloc pixel: %@", @(t3-t2));
-    [coreImageContext render:newImage toCVPixelBuffer:newPixcelBuffer];
-    CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
-    CFAbsoluteTime t4 = CFAbsoluteTimeGetCurrent();
-    NSLog(@"dur render pixel: %@", @(t4-t3));
-    
-    //
-    CMSampleTimingInfo sampleTimingInfo = {
-        .duration = CMSampleBufferGetDuration(sampleBuffer),
-        .presentationTimeStamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer),
-        .decodeTimeStamp = CMSampleBufferGetDecodeTimeStamp(sampleBuffer)
-    };
-    
-    //
-    CMVideoFormatDescriptionRef videoInfo = nil;
-    CMVideoFormatDescriptionCreateForImageBuffer(kCFAllocatorDefault, newPixcelBuffer, &videoInfo);
-    
-    CMSampleBufferRef newSampleBuffer = nil;
-    CMSampleBufferCreateForImageBuffer(kCFAllocatorMalloc, newPixcelBuffer, true, nil, nil, videoInfo, &sampleTimingInfo, &newSampleBuffer);
-    
-    CFAbsoluteTime t5 = CFAbsoluteTimeGetCurrent();
-    NSLog(@"dur create CMSample: %@", @(t5-t4));
-    // release
-    CVPixelBufferRelease(newPixcelBuffer);
-    CFAbsoluteTime t6 = CFAbsoluteTimeGetCurrent();
-    NSLog(@"dur end rotate: %@", @(t6-t0));
-    return newSampleBuffer;
 }
 
 #pragma mark - 相关操作
@@ -463,12 +355,12 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
     if(gpuCamera){
         [gpuCamera rotateCamera];
     }else {
-    if (session.isRunning) {
-        cameraFront = !cameraFront;
-        [session stopRunning];
-        [self setupCamera];
-        [session startRunning];
-    }
+        if (session.isRunning) {
+            cameraFront = !cameraFront;
+            [session stopRunning];
+            [self setupCamera];
+            [session startRunning];
+        }
     }
 }
 
@@ -508,6 +400,10 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
         [gpuCamera removeInputsAndOutputs];
         [gpuCamera removeAllTargets];
         [beautifyFilter removeAllTargets];
+    }
+    
+    if(coreImageContext){
+        coreImageContext = nil;
     }
     
     if(timerRender){
@@ -591,40 +487,85 @@ static NSInteger kAudioPlayerRequireEmptyTimes = 0; /// 如果有语音重置为
 
 /// 录制一定的样本针就会回调，CMSampleBufferRef中可以获得相关sample信息
 - (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
-    CFAbsoluteTime t0 = CFAbsoluteTimeGetCurrent();
-    CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
-    
-    // 转换为CIImage
-    CIImage *ciImage = [CIImage imageWithCVPixelBuffer:pixelBuffer];
-    
-    // 创建滤镜
-    CIFilter *fiter = [CIFilter filterWithName:@"CIHardLightBlendMode"]; // CIHardLightBlendMode CIFaceBalance
-
-    [fiter setValue:ciImage forKey:@"inputImage"];
-//    [fiter setValue:@100 forKey:@"inputStrength"];
-    ciImage = fiter.outputImage;
-    
-    [coreImageContext render:ciImage toCVPixelBuffer:pixelBuffer];
-    CFAbsoluteTime t1 = CFAbsoluteTimeGetCurrent();
-    NSLog(@"dur to ciimage: %@", @(t1-t0));
-    
-    [self actionCaptureOutEx:pixelBuffer];
-    
-//    [self actionCaptureOut:sampleBuffer];
+    [self actionCaptureOut:sampleBuffer];
 }
 
 - (void)actionCaptureOut:(CMSampleBufferRef)sampleBuffer {
     if(self.recordEnd==nil)return;
-    
-    PYIMModeVideo *video = [PYIMVideoConverter convertSample:sampleBuffer];
-    if(video.media){
-        video.mirror = gpuCamera?gpuCamera.frontFacingCameraPresent:cameraFront;
-        video.angle = 90; // 默认只支持竖屏
-        video.fps = fps_balance;
-        video.bitrate = VIDEO_BITRATE;
+    if(_isFilter){
+        @autoreleasepool{
+            CFAbsoluteTime t0 = CFAbsoluteTimeGetCurrent();
+            CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+            CIImage *ciImage = [CIImage imageWithCVPixelBuffer:pixelBuffer];
+            CIImage *filteredImage = nil;
+            
+            /* 美颜效果 - 但是不生效
+             YUCIHighPassSkinSmoothing *fiter = [[YUCIHighPassSkinSmoothing alloc] init];
+             fiter.inputImage = ciImage;
+             fiter.inputAmount = @0.7;
+             fiter.inputRadius = @(5);
+             CIImage *filteredImage = [fiter outputImage];
+             */
+            
+            /* 滤镜蒙版效果
+             CIImage *sourceImage = [CIImage imageWithCVPixelBuffer:pixelBuffer options:nil];
+             CGRect sourceExtent = sourceImage.extent;
+             
+             // Image processing
+             CIFilter * vignetteFilter = [CIFilter filterWithName:@"CIVignetteEffect"];
+             [vignetteFilter setValue:sourceImage forKey:kCIInputImageKey];
+             [vignetteFilter setValue:[CIVector vectorWithX:sourceExtent.size.width/2 Y:sourceExtent.size.height/2] forKey:kCIInputCenterKey];
+             [vignetteFilter setValue:@(sourceExtent.size.width/2) forKey:kCIInputRadiusKey];
+             CIImage *filteredImage = [vignetteFilter outputImage];
+             
+             CIFilter *effectFilter = [CIFilter filterWithName:@"CIPhotoEffectInstant"];
+             [effectFilter setValue:filteredImage forKey:kCIInputImageKey];
+             filteredImage = [effectFilter valueForKey:kCIOutputImageKey]; // 取出渲染后图片
+             */
+            
+            //     手动调整控制光效等 - 待调试
+            CIFilter *fiter = [CIFilter filterWithName:@"CIFaceBalance"];
+            [fiter setValue:ciImage forKey:@"inputImage"];
+            [fiter setValue:@1 forKey:@"inputStrength"];
+            filteredImage = [fiter valueForKey:kCIOutputImageKey];
+            
+            NSLog(@"%@", [[CIFilter filterWithName:@"CIFaceBalance"] attributes]);
+            ////
+            //    [filter setValue:outImage forKey:kCIInputImageKey]; // 设置输入图片
+            //    [filter setDefaults];
+            //    [filter setValue:@0.7 forKey:@"inputAmount"]; //设置滤镜参数 - 饱和度 0~2
+            //    [filter setValue:@1.1 forKey:@"inputSaturation"]; //设置滤镜参数 - 饱和度 0~2
+            //    [filter setValue:@0 forKey:@"inputBrightness"]; // 亮度 -1~1
+            //    [filter setValue:@1.2 forKey:@"inputContrast"]; // 对比度 0~2
+            
+            //    outImage = [filter valueForKey:kCIOutputImageKey]; // 取出渲染后图片
+            //
+            
+            [coreImageContext render:filteredImage toCVPixelBuffer:pixelBuffer];
+            
+            // BGRA to YUV
+            pixelBuffer = [DotEnginePixelBuffer convertPixelBuffer:pixelBuffer];
+            
+            CFAbsoluteTime t1 = CFAbsoluteTimeGetCurrent();
+            NSLog(@"dur to ciimage: %@", @(t1-t0));
+            [self actionCaptureOutEx:pixelBuffer];
+            ciImage = nil;
+            filteredImage = nil;
+            fiter = nil;
+            free(pixelBuffer);
+        }
         
-        if(_state == EMediaState_Playing)
-            self.recordEnd(video);
+    }else {
+        PYIMModeVideo *video = [PYIMVideoConverter convertSample:sampleBuffer];
+        if(video.media){
+            video.mirror = gpuCamera?gpuCamera.frontFacingCameraPresent:cameraFront;
+            video.angle = 90; // 默认只支持竖屏
+            video.fps = fps_balance;
+            video.bitrate = VIDEO_BITRATE;
+            
+            if(_state == EMediaState_Playing)
+                self.recordEnd(video);
+        }
     }
 }
 

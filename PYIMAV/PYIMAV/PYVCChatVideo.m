@@ -18,6 +18,7 @@
 
 @interface PYVCChatVideo () {
     uint64_t timeRecord; // 开始录制时间
+    NSTimer *timerRequest;
 }
 
 @property (weak, nonatomic) IBOutlet UIView *viewBg;
@@ -95,6 +96,7 @@
     self.audioController = [[PYIMAudioController alloc] init];
     self.audioController.isLocal = self.isLocal;
     self.audioController.isCompress = self.isCompress;
+    self.audioController.is8kTo8k = self.is8kTo8k;
     
     self.viewBg.userInteractionEnabled = YES;
     UITapGestureRecognizer *tapG = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapGuesture:)];
@@ -149,7 +151,15 @@
         }];
         
         self.taskGetAccount.media.resentCount = 3; // 30秒都没有成功可能对方不在线
+        
+        // 启动timer
+        timerRequest = [NSTimer timerWithTimeInterval:self.taskGetAccount.media.timeOutSpan*2 target:self selector:@selector(requestSlowly) userInfo:nil repeats:NO];
+        [[NSRunLoop currentRunLoop] addTimer:timerRequest forMode:NSRunLoopCommonModes];
     }
+}
+
+- (void)requestSlowly {
+    [self.view makeToast:@"对方手机可能不在身边"];
 }
 
 - (void)startPlay {
@@ -174,18 +184,21 @@
         
         // 注意此处在录制子线程执行；录制中途是不会断开的，所以时间上也是连续的；不支持暂停，要么通话要么断开
         [self.audioController recordAudio:^(NSData *media) {
-            PYIMModeAudio *audio = [[PYIMModeAudio alloc] init];
-            audio.media = media;
-            audio.timeRecordStart = timeRecord;
-            audio.timeRecordEnd = [[NSDate date] timeIntervalSince1970]*1000;
-            
             __strong typeof(self) strongSelf = weakSelf;
-            if(strongSelf && strongSelf.isLocal){
-                [strongSelf.audioController playAudio:audio];
-                return;
+            if(strongSelf){
+                PYIMModeAudio *audio = [[PYIMModeAudio alloc] init];
+                audio.media = media;
+                audio.timeRecordStart = timeRecord;
+                audio.timeRecordEnd = [[NSDate date] timeIntervalSince1970]*1000;
+                audio.is8kTo8k = self.is8kTo8k;
+                
+                if(strongSelf.isLocal){
+                    [strongSelf.audioController playAudio:audio];
+                    return;
+                }
+                
+                [PYIMAPIChat chatC2CSendMedia:audio callback:nil];
             }
-            
-//            [PYIMAPIChat chatC2CSendMedia:audio callback:nil];
         }];
         
         [self.audioController startAudio:^(PYIMMediaState state) {
@@ -308,6 +321,11 @@
 
 - (void)caneclWithError:(PYIMError*)error isLocal:(BOOL)isLocal {
     if(self.videoController==nil)return;
+    
+    if(timerRequest){
+        [timerRequest invalidate];
+        timerRequest = nil;
+    }
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     if(self.taskGetAccount){

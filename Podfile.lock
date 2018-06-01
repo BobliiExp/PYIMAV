@@ -60,6 +60,9 @@ PODS:
     - FBRetainCycleDetector
   - RSSwizzle (0.1.0)
   - SVProgressHUD (2.2.5)
+  - Vivid (0.9)
+  - YUCIHighPassSkinSmoothing (1.4):
+    - Vivid
 
 DEPENDENCIES:
   - AFNetworking
@@ -72,6 +75,7 @@ DEPENDENCIES:
   - MLeaksFinder
   - RSSwizzle
   - SVProgressHUD
+  - YUCIHighPassSkinSmoothing
 
 SPEC REPOS:
   https://github.com/CocoaPods/Specs.git:
@@ -85,6 +89,8 @@ SPEC REPOS:
     - MLeaksFinder
     - RSSwizzle
     - SVProgressHUD
+    - Vivid
+    - YUCIHighPassSkinSmoothing
 
 SPEC CHECKSUMS:
   AFNetworking: b6f891fdfaed196b46c7a83cf209e09697b94057
@@ -97,7 +103,9 @@ SPEC CHECKSUMS:
   MLeaksFinder: 8c435bd2f6d070af18cff082b503b21adc130fc0
   RSSwizzle: d561958f595028bfcef98c7d55c318b3878a61c6
   SVProgressHUD: 1428aafac632c1f86f62aa4243ec12008d7a51d6
+  Vivid: 0fde7409beac71224deb151dd78f98a5bb860497
+  YUCIHighPassSkinSmoothing: 8418fd1bf605ec22b647c57745b863b352f72097
 
-PODFILE CHECKSUM: 8dd9b274f8b71707e1020d68aef096d84301a76f
+PODFILE CHECKSUM: a1c19b9328c8f5a3f91487eef67181c5774b8325
 
 COCOAPODS: 1.5.0

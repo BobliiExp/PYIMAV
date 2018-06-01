@@ -57,6 +57,9 @@
 		25CBE47F20B26F9900CE51A7 /* c2s.c in Sources */ = {isa = PBXBuildFile; fileRef = 25CBE46E20B26F9900CE51A7 /* c2s.c */; };
 		25CBE48020B26F9900CE51A7 /* p2pnet.c in Sources */ = {isa = PBXBuildFile; fileRef = 25CBE47020B26F9900CE51A7 /* p2pnet.c */; };
 		25CBE48120B26F9900CE51A7 /* pdu.c in Sources */ = {isa = PBXBuildFile; fileRef = 25CBE47220B26F9900CE51A7 /* pdu.c */; };
+		25F2EFEF20C0F54500D3C305 /* DotEnginePixelBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 25F2EFEE20C0F54500D3C305 /* DotEnginePixelBuffer.m */; };
+		25F2F00B20C0F69400D3C305 /* libyuv.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 25F2F00920C0F69300D3C305 /* libyuv.a */; };
+		25F2F00C20C0F69400D3C305 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 25F2F00A20C0F69300D3C305 /* README.md */; };
 		C31A7A8A208DC63A000FE9B3 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = C31A7A89208DC63A000FE9B3 /* AppDelegate.m */; };
 		C31A7A8D208DC63A000FE9B3 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C31A7A8C208DC63A000FE9B3 /* ViewController.m */; };
 		C31A7A90208DC63A000FE9B3 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C31A7A8E208DC63A000FE9B3 /* Main.storyboard */; };
@@ -245,6 +248,31 @@
 		25CBE47120B26F9900CE51A7 /* p2pnet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = p2pnet.h; sourceTree = "<group>"; };
 		25CBE47220B26F9900CE51A7 /* pdu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pdu.c; sourceTree = "<group>"; };
 		25CBE47320B26F9900CE51A7 /* pdu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pdu.h; sourceTree = "<group>"; };
+		25F2EFED20C0F54500D3C305 /* DotEnginePixelBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DotEnginePixelBuffer.h; sourceTree = "<group>"; };
+		25F2EFEE20C0F54500D3C305 /* DotEnginePixelBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DotEnginePixelBuffer.m; sourceTree = "<group>"; };
+		25F2EFF320C0F69300D3C305 /* basic_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = basic_types.h; sourceTree = "<group>"; };
+		25F2EFF420C0F69300D3C305 /* compare.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = compare.h; sourceTree = "<group>"; };
+		25F2EFF520C0F69300D3C305 /* compare_row.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = compare_row.h; sourceTree = "<group>"; };
+		25F2EFF620C0F69300D3C305 /* convert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = convert.h; sourceTree = "<group>"; };
+		25F2EFF720C0F69300D3C305 /* convert_argb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = convert_argb.h; sourceTree = "<group>"; };
+		25F2EFF820C0F69300D3C305 /* convert_from.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = convert_from.h; sourceTree = "<group>"; };
+		25F2EFF920C0F69300D3C305 /* convert_from_argb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = convert_from_argb.h; sourceTree = "<group>"; };
+		25F2EFFA20C0F69300D3C305 /* cpu_id.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cpu_id.h; sourceTree = "<group>"; };
+		25F2EFFB20C0F69300D3C305 /* macros_msa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = macros_msa.h; sourceTree = "<group>"; };
+		25F2EFFC20C0F69300D3C305 /* mjpeg_decoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mjpeg_decoder.h; sourceTree = "<group>"; };
+		25F2EFFD20C0F69300D3C305 /* planar_functions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = planar_functions.h; sourceTree = "<group>"; };
+		25F2EFFE20C0F69300D3C305 /* rotate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rotate.h; sourceTree = "<group>"; };
+		25F2EFFF20C0F69300D3C305 /* rotate_argb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rotate_argb.h; sourceTree = "<group>"; };
+		25F2F00020C0F69300D3C305 /* rotate_row.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rotate_row.h; sourceTree = "<group>"; };
+		25F2F00120C0F69300D3C305 /* row.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = row.h; sourceTree = "<group>"; };
+		25F2F00220C0F69300D3C305 /* scale.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = scale.h; sourceTree = "<group>"; };
+		25F2F00320C0F69300D3C305 /* scale_argb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = scale_argb.h; sourceTree = "<group>"; };
+		25F2F00420C0F69300D3C305 /* scale_row.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = scale_row.h; sourceTree = "<group>"; };
+		25F2F00520C0F69300D3C305 /* version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = version.h; sourceTree = "<group>"; };
+		25F2F00620C0F69300D3C305 /* video_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = video_common.h; sourceTree = "<group>"; };
+		25F2F00720C0F69300D3C305 /* libyuv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = libyuv.h; sourceTree = "<group>"; };
+		25F2F00920C0F69300D3C305 /* libyuv.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libyuv.a; sourceTree = "<group>"; };
+		25F2F00A20C0F69300D3C305 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		519CE7955F61AE05573F0059 /* Pods-PYIMAV.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PYIMAV.debug.xcconfig"; path = "Pods/Target Support Files/Pods-PYIMAV/Pods-PYIMAV.debug.xcconfig"; sourceTree = "<group>"; };
 		55234CB8E86E3ED5C2CFED7E /* libPods-PYIMAV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PYIMAV.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C31A7A85208DC63A000FE9B3 /* PYIMAV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PYIMAV.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -278,6 +306,7 @@
 				2557C09020B55C6B00205363 /* libbz2.tbd in Frameworks */,
 				257780C920940F8D00B43AFD /* CoreTelephony.framework in Frameworks */,
 				257780C720940F8600B43AFD /* VideoToolbox.framework in Frameworks */,
+				25F2F00B20C0F69400D3C305 /* libyuv.a in Frameworks */,
 				25C118DE20B3EC410034E2F8 /* libswscale.a in Frameworks */,
 				25C118D720B3EC410034E2F8 /* libavcodec.a in Frameworks */,
 				257780C520940F7F00B43AFD /* OpenGLES.framework in Frameworks */,
@@ -579,6 +608,9 @@
 		25CBE45220B26F9900CE51A7 /* Helper */ = {
 			isa = PBXGroup;
 			children = (
+				25F2EFF020C0F69300D3C305 /* libyuv */,
+				25F2EFED20C0F54500D3C305 /* DotEnginePixelBuffer.h */,
+				25F2EFEE20C0F54500D3C305 /* DotEnginePixelBuffer.m */,
 				25A3E87620BFC64F0067DE56 /* GPUImageBeautifyFilter */,
 				25C1185320B3EC410034E2F8 /* OpenGL */,
 				25CBE45320B26F9900CE51A7 /* Category */,
@@ -631,6 +663,60 @@
 				25CBE47320B26F9900CE51A7 /* pdu.h */,
 			);
 			path = RainbowAV;
+			sourceTree = "<group>";
+		};
+		25F2EFF020C0F69300D3C305 /* libyuv */ = {
+			isa = PBXGroup;
+			children = (
+				25F2EFF120C0F69300D3C305 /* include */,
+				25F2F00820C0F69300D3C305 /* lib */,
+				25F2F00A20C0F69300D3C305 /* README.md */,
+			);
+			path = libyuv;
+			sourceTree = "<group>";
+		};
+		25F2EFF120C0F69300D3C305 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				25F2EFF220C0F69300D3C305 /* libyuv */,
+				25F2F00720C0F69300D3C305 /* libyuv.h */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		25F2EFF220C0F69300D3C305 /* libyuv */ = {
+			isa = PBXGroup;
+			children = (
+				25F2EFF320C0F69300D3C305 /* basic_types.h */,
+				25F2EFF420C0F69300D3C305 /* compare.h */,
+				25F2EFF520C0F69300D3C305 /* compare_row.h */,
+				25F2EFF620C0F69300D3C305 /* convert.h */,
+				25F2EFF720C0F69300D3C305 /* convert_argb.h */,
+				25F2EFF820C0F69300D3C305 /* convert_from.h */,
+				25F2EFF920C0F69300D3C305 /* convert_from_argb.h */,
+				25F2EFFA20C0F69300D3C305 /* cpu_id.h */,
+				25F2EFFB20C0F69300D3C305 /* macros_msa.h */,
+				25F2EFFC20C0F69300D3C305 /* mjpeg_decoder.h */,
+				25F2EFFD20C0F69300D3C305 /* planar_functions.h */,
+				25F2EFFE20C0F69300D3C305 /* rotate.h */,
+				25F2EFFF20C0F69300D3C305 /* rotate_argb.h */,
+				25F2F00020C0F69300D3C305 /* rotate_row.h */,
+				25F2F00120C0F69300D3C305 /* row.h */,
+				25F2F00220C0F69300D3C305 /* scale.h */,
+				25F2F00320C0F69300D3C305 /* scale_argb.h */,
+				25F2F00420C0F69300D3C305 /* scale_row.h */,
+				25F2F00520C0F69300D3C305 /* version.h */,
+				25F2F00620C0F69300D3C305 /* video_common.h */,
+			);
+			path = libyuv;
+			sourceTree = "<group>";
+		};
+		25F2F00820C0F69300D3C305 /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				25F2F00920C0F69300D3C305 /* libyuv.a */,
+			);
+			path = lib;
 			sourceTree = "<group>";
 		};
 		BA430D3A15989D80CE406A15 /* Pods */ = {
@@ -783,6 +869,7 @@
 				257D30912093222E001303D9 /* Podfile in Resources */,
 				C31A7A95208DC63A000FE9B3 /* LaunchScreen.storyboard in Resources */,
 				C31A7ADD208DDEF8000FE9B3 /* PYVCChatAudio.xib in Resources */,
+				25F2F00C20C0F69400D3C305 /* README.md in Resources */,
 				C31A7A92208DC63A000FE9B3 /* Assets.xcassets in Resources */,
 				C31A7A90208DC63A000FE9B3 /* Main.storyboard in Resources */,
 				C31A7AD8208DDEE3000FE9B3 /* PYVCChatVideo.xib in Resources */,
@@ -805,6 +892,26 @@
 				"${PODS_ROOT}/GPUImage/framework/Resources/lookup_soft_elegance_1.png",
 				"${PODS_ROOT}/GPUImage/framework/Resources/lookup_soft_elegance_2.png",
 				"${PODS_ROOT}/SVProgressHUD/SVProgressHUD/SVProgressHUD.bundle",
+				"${PODS_ROOT}/Vivid/Sources/YUCIBilateralFilter.cikernel",
+				"${PODS_ROOT}/Vivid/Sources/YUCIBlobsGenerator.cikernel",
+				"${PODS_ROOT}/Vivid/Sources/YUCICLAHE.cikernel",
+				"${PODS_ROOT}/Vivid/Sources/YUCIColorLookup.cikernel",
+				"${PODS_ROOT}/Vivid/Sources/YUCIColorLookupTableDefault.png",
+				"${PODS_ROOT}/Vivid/Sources/YUCICrossZoomTransition.cikernel",
+				"${PODS_ROOT}/Vivid/Sources/YUCIFilmBurnTransition.cikernel",
+				"${PODS_ROOT}/Vivid/Sources/YUCIFlashTransition.cikernel",
+				"${PODS_ROOT}/Vivid/Sources/YUCIFXAA.cikernel",
+				"${PODS_ROOT}/Vivid/Sources/YUCIHSLToRGB.cikernel",
+				"${PODS_ROOT}/Vivid/Sources/YUCIReflectedTile.cikernel",
+				"${PODS_ROOT}/Vivid/Sources/YUCIRGBToHSL.cikernel",
+				"${PODS_ROOT}/Vivid/Sources/YUCIRGBToneCurve.cikernel",
+				"${PODS_ROOT}/Vivid/Sources/YUCISkyGenerator.cikernel",
+				"${PODS_ROOT}/Vivid/Sources/YUCIStarfieldGenerator.cikernel",
+				"${PODS_ROOT}/Vivid/Sources/YUCISurfaceBlur.cikernel",
+				"${PODS_ROOT}/Vivid/Sources/YUCITriangularPixellate.cikernel",
+				"${PODS_ROOT}/YUCIHighPassSkinSmoothing/Sources/YUCIGreenBlueChannelOverlayBlend.cikernel",
+				"${PODS_ROOT}/YUCIHighPassSkinSmoothing/Sources/YUCIHighPass.cikernel",
+				"${PODS_ROOT}/YUCIHighPassSkinSmoothing/Sources/YUCIHighPassSkinSmoothingMaskBoost.cikernel",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -814,6 +921,26 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/lookup_soft_elegance_1.png",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/lookup_soft_elegance_2.png",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SVProgressHUD.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCIBilateralFilter.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCIBlobsGenerator.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCICLAHE.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCIColorLookup.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCIColorLookupTableDefault.png",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCICrossZoomTransition.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCIFilmBurnTransition.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCIFlashTransition.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCIFXAA.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCIHSLToRGB.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCIReflectedTile.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCIRGBToHSL.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCIRGBToneCurve.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCISkyGenerator.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCIStarfieldGenerator.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCISurfaceBlur.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCITriangularPixellate.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCIGreenBlueChannelOverlayBlend.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCIHighPass.cikernel",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/YUCIHighPassSkinSmoothingMaskBoost.cikernel",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -849,6 +976,7 @@
 				2558F4712091B57F00F52DF8 /* PYIMNetworkManager.m in Sources */,
 				252FDF0020ABC7580018C685 /* PYIMVideoController.m in Sources */,
 				25CBE47C20B26F9900CE51A7 /* PYNoteManager.m in Sources */,
+				25F2EFEF20C0F54500D3C305 /* DotEnginePixelBuffer.m in Sources */,
 				25A3E87920BFC64F0067DE56 /* GPUImageBeautifyFilter.m in Sources */,
 				C31A7A8D208DC63A000FE9B3 /* ViewController.m in Sources */,
 				25CBE47D20B26F9900CE51A7 /* adpcm.c in Sources */,
@@ -1023,6 +1151,7 @@
 					"\"${PODS_ROOT}/Headers/Public/MLeaksFinder\"",
 					"\"${PODS_ROOT}/Headers/Public/libextobjc\"",
 					"\"$(SRCROOT)/PYIMAV/PYIMAV/Helper/OpenGL/FFmpeg-iOS/include\"",
+					"\"$(SRCROOT)/PYIMAV/PYIMAV/Helper/libyuv/include\"",
 				);
 				INFOPLIST_FILE = PYIMAV/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -1030,6 +1159,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/OpenGL/FFmpeg-iOS/lib",
 					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/OpenGL/x264-iOS/lib",
+					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/libyuv/lib",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.Ponyo.PYIMAV;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1058,6 +1188,7 @@
 					"\"${PODS_ROOT}/Headers/Public/MLeaksFinder\"",
 					"\"${PODS_ROOT}/Headers/Public/libextobjc\"",
 					"\"$(SRCROOT)/PYIMAV/PYIMAV/Helper/OpenGL/FFmpeg-iOS/include\"",
+					"\"$(SRCROOT)/PYIMAV/PYIMAV/Helper/libyuv/include\"",
 				);
 				INFOPLIST_FILE = PYIMAV/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -1065,6 +1196,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/OpenGL/FFmpeg-iOS/lib",
 					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/OpenGL/x264-iOS/lib",
+					"$(PROJECT_DIR)/PYIMAV/PYIMAV/Helper/libyuv/lib",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.Ponyo.PYIMAV;
 				PRODUCT_NAME = "$(TARGET_NAME)";

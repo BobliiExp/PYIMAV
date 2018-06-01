@@ -18,6 +18,7 @@
 @property (nonatomic, assign) BOOL isLocal; ///< 本地测试
 @property (nonatomic, assign) BOOL is8kTo8k; ///< 本地8k验证
 @property (nonatomic, assign) BOOL isCompress; ///< 是否压缩
+@property (nonatomic, assign) BOOL isFilter; ///< 是否美化
 
 /**
  * @brief 初始化视频录制需要的相关对象属性

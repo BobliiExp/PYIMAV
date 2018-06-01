@@ -9,6 +9,20 @@
 #ifndef PYConfig_h
 #define PYConfig_h
 
+/**
+ 应用所在设备类型
+ */
+typedef NS_ENUM(uint16_t, PYClientType) {
+    Client_None = 0,
+    Client_Android,
+    Client_iOS,
+    Client_WP,
+    Client_Web
+};
+
+/**
+ 网络状况
+ */
 typedef NS_ENUM(NSInteger, PYNetworkSocketState) {
     ENetworkSocketState_None,             ///< 未操作
     ENetworkSocketState_Connecting,       ///< 连接中

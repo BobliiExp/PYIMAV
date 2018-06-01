@@ -445,7 +445,7 @@ int encodeVideoFrame(uint16_t SeqId, uint16_t CmdStatus, CmdVideoFrame *pBody, u
 	body->packs = htons_x(pBody->packs);
 	body->pid = htons_x(pBody->pid);
 	body->packLen = htons_x(pBody->packLen);
-    body->client = htons_x(Client_iOS);
+    body->client = htons_x(pBody->client);
 	memcpy(buf+sizeof(Header)+sizeof(CmdVideoFrame), data, data_len);
 	return 0;
 }
@@ -520,7 +520,7 @@ int encodeVideoFrameEx(uint16_t SeqId, uint16_t CmdStatus, CmdVideoFrameEx *pBod
 	body->bitrate = htons_x(pBody->bitrate);
 	body->angle = htons_x(pBody->angle);
 	body->mirror = htons_x(pBody->mirror);
-    body->client = htons_x(Client_iOS);
+    body->client = htons_x(pBody->client);
     
 	memcpy(buf+sizeof(Header)+sizeof(CmdVideoFrameEx), data, data_len);
 	return 0;
