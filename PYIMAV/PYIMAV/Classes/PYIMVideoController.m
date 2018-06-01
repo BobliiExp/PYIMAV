@@ -2,7 +2,7 @@
 //  PYIMVideoController.m
 //  PYIMAV
 //
-//  Created by 002 on 2018/5/16.
+//  Created by Bob Lee on 2018/5/16.
 //  Copyright © 2018年 Ponyo. All rights reserved.
 //
 
