@@ -495,7 +495,7 @@ typedef struct MyAUGraphStruct{
                     int len = buffer.mDataByteSize, lenTotal = (int)mDataRec.length;
                     
                     // 为mBuffers[0].mData分配内存大小
-                    memset(buffer.mData, 0, len);
+//                    memset(buffer.mData, 0, len);
                     memcpy(buffer.mData, mDataRec.bytes, len);
                     buffer.mDataByteSize = len;
                     

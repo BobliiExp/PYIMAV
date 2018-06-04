@@ -40,7 +40,8 @@ static AudioConverterRef PCM44kTo8kConverterRef;    // 发送
 }
 
 - (void)dispose {
-    AudioConverterDispose(PCM44kTo8kConverterRef);
+    if(PCM44kTo8kConverterRef)
+        AudioConverterDispose(PCM44kTo8kConverterRef);
 }
 
 - (void)dealloc {

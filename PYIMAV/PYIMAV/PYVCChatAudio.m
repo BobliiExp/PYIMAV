@@ -270,6 +270,7 @@
     
     if(self.isLocal){
         kAccount.chatType = kAccount.chatType & ~(1 << P2P_CHAT_TYPE_AUDIO);
+        kAccount.chatState = 0;
     }
     
     if(self.audioController){

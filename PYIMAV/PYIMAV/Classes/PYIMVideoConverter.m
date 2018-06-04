@@ -18,9 +18,6 @@
 #include "libavformat/avformat.h"
 #include "libswscale/swscale.h"
 
-static uint8_t *g_vedio_buffer;
-static size_t g_video_buffer_length;
-
 @interface PYIMVideoConverter() {
     x264_t                  *pX264Handle;
     x264_param_t            *pX264Param;
@@ -73,14 +70,12 @@ static size_t g_video_buffer_length;
         fps_encode_latest = VIDEO_FPS;
         width_encode = ENCODE_FRMAE_WIDTH;
         height_encode = ENCODE_FRMAE_HEIGHT;
-        
-        [self setupConverter];
     }
     
     return self;
 }
 
-- (void)closeConverter {
+- (void)cleanConverter {
     if(pPicOut){
         free(pPicOut);
         pPicOut = NULL;
@@ -98,7 +93,7 @@ static size_t g_video_buffer_length;
 }
 
 - (void)setupConverter {
-    [self closeConverter];
+    [self cleanConverter];
     
     pX264Param = (x264_param_t *)malloc(sizeof(x264_param_t));
     assert(pX264Param);
@@ -201,17 +196,9 @@ static size_t g_video_buffer_length;
         return;
     }
     
-    pPicIn = (x264_picture_t *)malloc(sizeof(x264_picture_t));
-    memset(pPicIn, 0, sizeof(x264_picture_t));
-    // TODO:这里有内存泄漏问题，后面要分析处理
-    x264_picture_alloc(pPicIn, X264_CSP_I420, pX264Param->i_width, pX264Param->i_height);
-    pPicIn->i_type = X264_TYPE_AUTO;
-    
     pPicOut = (x264_picture_t *)malloc(sizeof(x264_picture_t));
     memset(pPicOut, 0, sizeof(x264_picture_t));
     x264_picture_init(pPicOut);
-    
-    
 }
 
 #pragma mark - data management
@@ -268,15 +255,7 @@ static size_t g_video_buffer_length;
         int ret = 0;
         
         if ((int)(width * height) > (int)(ENCODE_FRMAE_WIDTH * ENCODE_FRMAE_HEIGHT)) {
-            if (!g_vedio_buffer){
-                g_vedio_buffer = (uint8_t *)malloc(video_size);
-                g_video_buffer_length = video_size;
-            }
-            
-            if(g_video_buffer_length<video_size){
-                realloc(g_vedio_buffer, video_size);
-                g_video_buffer_length = video_size;
-            }
+            uint8_t *g_vedio_buffer = (uint8_t *)malloc(video_size);
             
             float x = ((float)width)/ENCODE_FRMAE_WIDTH;
             float y = ((float)height)/ENCODE_FRMAE_HEIGHT;
@@ -292,10 +271,10 @@ static size_t g_video_buffer_length;
             }
             
             out_size = out_width*out_height*3/2;
-            bzero(g_vedio_buffer, video_size);
             
             ret = resize_frame(yuv420_data, (int)width, (int)height, g_vedio_buffer, (int)out_width, (int)out_height);
             video.media = [NSData dataWithBytes:g_vedio_buffer length:out_size];
+            free(g_vedio_buffer);
         } else {
             video.media = [NSData dataWithBytes:yuv420_data length:out_size];
         }
@@ -361,15 +340,7 @@ static size_t g_video_buffer_length;
         int ret = 0;
         
         if ((int)(width * height) > (int)(ENCODE_FRMAE_WIDTH * ENCODE_FRMAE_HEIGHT)) {
-            if (!g_vedio_buffer){
-                g_vedio_buffer = (uint8_t *)malloc(video_size);
-                g_video_buffer_length = video_size;
-            }
-            
-            if(g_video_buffer_length<video_size){
-                realloc(g_vedio_buffer, video_size);
-                g_video_buffer_length = video_size;
-            }
+            uint8_t *g_vedio_buffer = (uint8_t *)malloc(video_size);
             
             float x = ((float)width)/ENCODE_FRMAE_WIDTH;
             float y = ((float)height)/ENCODE_FRMAE_HEIGHT;
@@ -385,10 +356,11 @@ static size_t g_video_buffer_length;
             }
             
             out_size = out_width*out_height*3/2;
-            bzero(g_vedio_buffer, video_size);
             
             ret = resize_frame(yuv420_data, (int)width, (int)height, g_vedio_buffer, (int)out_width, (int)out_height);
             video.media = [NSData dataWithBytes:g_vedio_buffer length:out_size];
+            free(g_vedio_buffer);
+            
         } else {
             video.media = [NSData dataWithBytes:yuv420_data length:out_size];
         }
@@ -410,10 +382,10 @@ static size_t g_video_buffer_length;
     @synchronized(self){
         NSData *data = video.media;
         
-        // 尝试更新fps
-        if(video.fps != pX264Param->i_fps_num ||
-           video.width != pX264Param->i_width ||
-           video.height != pX264Param->i_height ||
+        // 尝试更新fps；通过分析Android代码发现，每次其实都要设置一次converter，使用完后要clean
+        if(video.fps != fps_encode_latest ||
+           video.width != width_encode ||
+           video.height != height_encode ||
            pX264Handle==nil){
             
             fps_encode_latest = video.fps;
@@ -423,6 +395,21 @@ static size_t g_video_buffer_length;
             
             if(pX264Handle==nil)
                 return nil;
+        }
+        
+        // 宽高变化导致绘制区域更新
+        if(video.width != pX264Param->i_width ||
+           video.height != pX264Param->i_height ||
+           pPicIn==nil){
+            if(pPicIn){
+                x264_picture_clean(pPicIn);
+            }
+            
+            pPicIn = (x264_picture_t *)malloc(sizeof(x264_picture_t));
+            memset(pPicIn, 0, sizeof(x264_picture_t));
+            // TODO:这里有内存泄漏问题，后面要分析处理
+            x264_picture_alloc(pPicIn, X264_CSP_I420, pX264Param->i_width, pX264Param->i_height);
+            pPicIn->i_type = X264_TYPE_AUTO;
         }
             
         pPicIn->img.i_plane = 3;
@@ -446,6 +433,8 @@ static size_t g_video_buffer_length;
             
             frameNo++;
         }
+        
+        [self cleanConverter];
     }
     
     return mData;
@@ -572,11 +561,6 @@ static size_t g_video_buffer_length;
     if(pX264Param){
         free(pX264Param);
         pX264Param = NULL;
-    }
-    
-    if(g_vedio_buffer){
-        free(g_vedio_buffer);
-        g_vedio_buffer = NULL;
     }
 }
 

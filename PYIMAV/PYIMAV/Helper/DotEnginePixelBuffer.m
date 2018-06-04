@@ -112,7 +112,7 @@
             
             uint8_t* outputBytes = calloc(1,total_size);
             
-            uint8_t* srcBase = CVPixelBufferGetBaseAddress(pixelBuffer);
+//            uint8_t* srcBase = CVPixelBufferGetBaseAddress(pixelBuffer);
             
             I420ToNV12(CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 0),
                        half_width * 2,

@@ -211,6 +211,8 @@ adpcm_state decode_state;
 }
 
 - (void)dealloc {
+    self.mode = nil;
+    [self cancelTimer];
 //    NSLog(@"dealloc NSOperation cmd:0x%04x seq:%d ip:%@ port:%d", self.mode.cmdID, self.mode.seqID, self.mode.hostServer, self.mode.portServer);
 }
 
@@ -1319,7 +1321,8 @@ adpcm_state decode_state;
 
 // ** 部分数据修改必须等到发送完成才能做
 - (void)manageOperationForChat:(PYIMModeMedia*)media {
-    if(media.cmdID == C2C_CLOSE) {
+    if(media.cmdID == C2C_CLOSE ||
+       media.cmdID == C2C_CANCEL_REQUEST) {
         kAccount.toAccount = 0;
         kAccount.toIp = nil;
         kAccount.toPort = 0;
