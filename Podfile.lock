@@ -1,0 +1,111 @@
+PODS:
+  - AFNetworking (3.2.1):
+    - AFNetworking/NSURLSession (= 3.2.1)
+    - AFNetworking/Reachability (= 3.2.1)
+    - AFNetworking/Security (= 3.2.1)
+    - AFNetworking/Serialization (= 3.2.1)
+    - AFNetworking/UIKit (= 3.2.1)
+  - AFNetworking/NSURLSession (3.2.1):
+    - AFNetworking/Reachability
+    - AFNetworking/Security
+    - AFNetworking/Serialization
+  - AFNetworking/Reachability (3.2.1)
+  - AFNetworking/Security (3.2.1)
+  - AFNetworking/Serialization (3.2.1)
+  - AFNetworking/UIKit (3.2.1):
+    - AFNetworking/NSURLSession
+  - CocoaAsyncSocket (7.6.3)
+  - FBRetainCycleDetector (0.1.4)
+  - FMDB (2.7.2):
+    - FMDB/standard (= 2.7.2)
+  - FMDB/standard (2.7.2)
+  - GPUImage (0.1.7)
+  - libextobjc (0.4.1):
+    - libextobjc/EXTADT (= 0.4.1)
+    - libextobjc/EXTConcreteProtocol (= 0.4.1)
+    - libextobjc/EXTKeyPathCoding (= 0.4.1)
+    - libextobjc/EXTNil (= 0.4.1)
+    - libextobjc/EXTSafeCategory (= 0.4.1)
+    - libextobjc/EXTScope (= 0.4.1)
+    - libextobjc/EXTSelectorChecking (= 0.4.1)
+    - libextobjc/EXTSynthesize (= 0.4.1)
+    - "libextobjc/NSInvocation+EXT (= 0.4.1)"
+    - "libextobjc/NSMethodSignature+EXT (= 0.4.1)"
+    - libextobjc/RuntimeExtensions (= 0.4.1)
+    - libextobjc/UmbrellaHeader (= 0.4.1)
+  - libextobjc/EXTADT (0.4.1):
+    - libextobjc/RuntimeExtensions
+  - libextobjc/EXTConcreteProtocol (0.4.1):
+    - libextobjc/RuntimeExtensions
+  - libextobjc/EXTKeyPathCoding (0.4.1):
+    - libextobjc/RuntimeExtensions
+  - libextobjc/EXTNil (0.4.1):
+    - libextobjc/RuntimeExtensions
+  - libextobjc/EXTSafeCategory (0.4.1):
+    - libextobjc/RuntimeExtensions
+  - libextobjc/EXTScope (0.4.1):
+    - libextobjc/RuntimeExtensions
+  - libextobjc/EXTSelectorChecking (0.4.1):
+    - libextobjc/RuntimeExtensions
+  - libextobjc/EXTSynthesize (0.4.1):
+    - libextobjc/RuntimeExtensions
+  - "libextobjc/NSInvocation+EXT (0.4.1)":
+    - libextobjc/RuntimeExtensions
+  - "libextobjc/NSMethodSignature+EXT (0.4.1)":
+    - libextobjc/RuntimeExtensions
+  - libextobjc/RuntimeExtensions (0.4.1)
+  - libextobjc/UmbrellaHeader (0.4.1)
+  - MBProgressHUD (1.1.0)
+  - MLeaksFinder (1.0.0):
+    - FBRetainCycleDetector
+  - RSSwizzle (0.1.0)
+  - SVProgressHUD (2.2.5)
+  - Vivid (0.9)
+  - YUCIHighPassSkinSmoothing (1.4):
+    - Vivid
+
+DEPENDENCIES:
+  - AFNetworking
+  - CocoaAsyncSocket
+  - FBRetainCycleDetector
+  - FMDB
+  - GPUImage (~> 0.1.7)
+  - libextobjc
+  - MBProgressHUD
+  - MLeaksFinder
+  - RSSwizzle
+  - SVProgressHUD
+  - YUCIHighPassSkinSmoothing
+
+SPEC REPOS:
+  https://github.com/CocoaPods/Specs.git:
+    - AFNetworking
+    - CocoaAsyncSocket
+    - FBRetainCycleDetector
+    - FMDB
+    - GPUImage
+    - libextobjc
+    - MBProgressHUD
+    - MLeaksFinder
+    - RSSwizzle
+    - SVProgressHUD
+    - Vivid
+    - YUCIHighPassSkinSmoothing
+
+SPEC CHECKSUMS:
+  AFNetworking: b6f891fdfaed196b46c7a83cf209e09697b94057
+  CocoaAsyncSocket: eafaa68a7e0ec99ead0a7b35015e0bf25d2c8987
+  FBRetainCycleDetector: 46f8179bbb1c587deee3ea838a1a3ee02acf5015
+  FMDB: 6198a90e7b6900cfc046e6bc0ef6ebb7be9236aa
+  GPUImage: 733a5f0fab92df9de1c37ba9df520a833ccb406d
+  libextobjc: a650fc1bf489a3d3a9bc2e621efa3e1006fc5471
+  MBProgressHUD: e7baa36a220447d8aeb12769bf0585582f3866d9
+  MLeaksFinder: 8c435bd2f6d070af18cff082b503b21adc130fc0
+  RSSwizzle: d561958f595028bfcef98c7d55c318b3878a61c6
+  SVProgressHUD: 1428aafac632c1f86f62aa4243ec12008d7a51d6
+  Vivid: 0fde7409beac71224deb151dd78f98a5bb860497
+  YUCIHighPassSkinSmoothing: 8418fd1bf605ec22b647c57745b863b352f72097
+
+PODFILE CHECKSUM: a1c19b9328c8f5a3f91487eef67181c5774b8325
+
+COCOAPODS: 1.5.0
